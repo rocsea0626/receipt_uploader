@@ -61,7 +61,7 @@ Response:
 
 `GET /api/receipts/{receiptId}?resolution=small|medium|large`
 Response:
-200 OK: Retrieved successfully, returns the image with the specified or default resolution.
+200 OK: Retrieved successfully, returns the image with the specified or default resolution. If query parameter `resolution` is not specified, default value `small` is used
 
 404 Not Found: Receipt does not exist
 ```bash
