@@ -10,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"receipt_uploader/constants"
+	"receipt_uploader/internal/handlers"
+	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/models/configs"
 
 	"github.com/google/uuid"
@@ -139,19 +141,30 @@ func LoadConfig() (*configs.Config, error) {
 	return config, nil
 }
 
-func InitServer(config *configs.Config) error {
-	tmpErr := os.Mkdir(config.DIR_TMP, 0755)
-	if tmpErr != nil {
-		err := fmt.Errorf("os.Mkdir() failed, err: %s", tmpErr.Error())
-		return err
-	}
-	log.Printf("folder %s has been created", config.DIR_TMP)
+func StartServer(config *configs.Config) {
+	log.Println("starting server...")
 
-	imagesErr := os.Mkdir(config.DIR_IMAGES, 0755)
-	if imagesErr != nil {
-		err := fmt.Errorf("os.Mkdir() failed, err: %s", imagesErr.Error())
-		return err
+	tmpErr := os.MkdirAll(config.DIR_TMP, 0755)
+	if tmpErr != nil {
+		fmt.Printf("failed to start server, err: %s", tmpErr.Error())
+		return
 	}
-	log.Printf("folder %s has been created", config.DIR_IMAGES)
-	return nil
+	fmt.Printf("folder %s has been created\n", config.DIR_TMP)
+
+	imagesErr := os.MkdirAll(config.DIR_IMAGES, 0755)
+	if imagesErr != nil {
+		fmt.Printf("failed to start server, err: %s", imagesErr.Error())
+		return
+	}
+	fmt.Printf("folder %s has been created\n", config.DIR_IMAGES)
+
+	imagesService := images.NewService()
+
+	http.HandleFunc("/health", handlers.HealthHandler())
+	http.HandleFunc("/receipts", handlers.ReceiptsHandler(config, imagesService))
+
+	fmt.Printf("Starting server on %s", constants.PORT)
+	if err := http.ListenAndServe(constants.PORT, nil); err != nil {
+		fmt.Println("Error starting server:", err)
+	}
 }

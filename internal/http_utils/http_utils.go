@@ -6,6 +6,13 @@ import (
 	"receipt_uploader/internal/models/http_responses"
 )
 
+func SendHealthResponse(w http.ResponseWriter, resp *http_responses.HealthResponse, status int) {
+	errMap := map[string]string{
+		"message": resp.Message,
+	}
+	sendResponse(w, &errMap, status)
+}
+
 func SendErrorResponse(w http.ResponseWriter, resp *http_responses.ErrorResponse, status int) {
 	errMap := map[string]string{
 		"error": resp.Error,
