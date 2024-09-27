@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"receipt_uploader/internal/futils"
 	"receipt_uploader/internal/test_utils"
 	"testing"
 
@@ -31,28 +32,6 @@ func TestResizeImage(t *testing.T) {
 	})
 }
 
-func TestGetOutputPath(t *testing.T) {
-	outputDir := "output"
-
-	t.Run("succeed", func(t *testing.T) {
-		fPath := "/input/test_resize_image.jpg"
-		newPath := getOutputPath(fPath, outputDir, "small")
-		assert.Equal(t, "output/test_resize_image_small.jpg", newPath)
-	})
-
-	t.Run("succeed, no extension", func(t *testing.T) {
-		fPath := "/input/test_resize_image"
-		newPath := getOutputPath(fPath, outputDir, "medium")
-		assert.Equal(t, "output/test_resize_image_medium", newPath)
-	})
-
-	t.Run("succeed, no path & extension", func(t *testing.T) {
-		fPath := "test_resize_image"
-		newPath := getOutputPath(fPath, outputDir, "large")
-		assert.Equal(t, "output/test_resize_image_large", newPath)
-	})
-}
-
 func TestGenerateImages(t *testing.T) {
 	inputPath := "./test.jpg"
 	outputDir := "./output/"
@@ -66,9 +45,9 @@ func TestGenerateImages(t *testing.T) {
 		genErr := GenerateImages(inputPath, outputDir)
 		assert.Nil(t, genErr)
 
-		smallImagePath := getOutputPath(inputPath, outputDir, "small")
-		mediumImagePath := getOutputPath(inputPath, outputDir, "medium")
-		largeImagePath := getOutputPath(inputPath, outputDir, "large")
+		smallImagePath := futils.GetOutputPath(inputPath, outputDir, "small")
+		mediumImagePath := futils.GetOutputPath(inputPath, outputDir, "medium")
+		largeImagePath := futils.GetOutputPath(inputPath, outputDir, "large")
 
 		_, smallErr := os.Stat(smallImagePath)
 		assert.Nil(t, smallErr)

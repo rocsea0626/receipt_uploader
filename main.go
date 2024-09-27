@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"receipt_uploader/constants"
+	"receipt_uploader/internal/futils"
 	"receipt_uploader/internal/http_utils"
 	"receipt_uploader/internal/models/http_responses"
 	"receipt_uploader/internal/utils"
@@ -44,7 +45,7 @@ func receiptsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	receiptID := utils.GetFileName(filePath)
+	receiptID := futils.GetFileName(filePath)
 	resp := http_responses.UploadResponse{
 		ReceiptID: receiptID,
 	}

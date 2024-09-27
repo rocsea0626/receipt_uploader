@@ -12,7 +12,6 @@ import (
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/futils"
 	"receipt_uploader/internal/models/configs"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -48,21 +47,6 @@ func resizeImage(filePath string, width, height uint) (image.Image, error) {
 
 	resizedImg := resize.Resize(width, height, img, resize.Lanczos3)
 	return resizedImg, nil
-}
-
-// getOutputPath() generates a file path for the output file by taking an input file path,
-// an output directory, and size is appended to the file name as suffix.
-//
-// Example:
-// inputFilePath := "/path/to/input/file.txt"
-// outputDir := "/path/to/output"
-// size := "small"
-// outputPath := "/path/to/output/file_small.txt"
-func getOutputPath(filePath string, outputDir string, size string) string {
-	fName := GetFileName(filePath)
-	extension := filepath.Ext(filePath)
-	newFilename := fmt.Sprintf("%s_%s%s", fName, size, extension)
-	return filepath.Join(outputDir, newFilename)
 }
 
 // save the original upload into tmpDir
@@ -103,7 +87,7 @@ func GenerateImages(inputPath string, outputDir string) error {
 		)
 		return err
 	}
-	saveSmallErr := saveImage(smallImg, getOutputPath(inputPath, outputDir, "small"))
+	saveSmallErr := saveImage(smallImg, futils.GetOutputPath(inputPath, outputDir, "small"))
 	if saveSmallErr != nil {
 		err := fmt.Errorf("saveImage() failed, err: %s", saveSmallErr.Error())
 		return err
@@ -117,27 +101,19 @@ func GenerateImages(inputPath string, outputDir string) error {
 		)
 		return err
 	}
-	saveMediumErr := saveImage(mediumImg, getOutputPath(inputPath, outputDir, "medium"))
+	saveMediumErr := saveImage(mediumImg, futils.GetOutputPath(inputPath, outputDir, "medium"))
 	if saveMediumErr != nil {
 		err := fmt.Errorf("saveImage() failed, err: %s", saveMediumErr.Error())
 		return err
 	}
 
-	saveLargeErr := futils.CopyFile(inputPath, getOutputPath(inputPath, outputDir, "large"))
+	saveLargeErr := futils.CopyFile(inputPath, futils.GetOutputPath(inputPath, outputDir, "large"))
 	if saveLargeErr != nil {
 		err := fmt.Errorf("futils.CopyFile() failed, err: %s", saveLargeErr.Error())
 		return err
 	}
 
 	return nil
-}
-
-// get file name without extension
-func GetFileName(filePath string) string {
-	base := filepath.Base(filePath)
-	extension := filepath.Ext(filePath)
-	fName := strings.TrimSuffix(base, extension)
-	return fName
 }
 
 func LoadConfig() (*configs.Config, error) {
