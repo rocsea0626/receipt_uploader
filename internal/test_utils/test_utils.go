@@ -7,9 +7,11 @@ import (
 	"image/color"
 	"image/jpeg"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
+	"receipt_uploader/internal/models/configs"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,41 +30,6 @@ func CreateTestImage(filePath string, width, height int) error {
 	}
 	defer out.Close()
 	return jpeg.Encode(out, img, nil)
-}
-
-// CreateImageForUpload will create a temporary JPEG image file and return
-// a multipart form file for use in tests.
-func CreateImageForUpload(t *testing.T, fileName string, width, height int) (*bytes.Buffer, *multipart.Writer) {
-	tempFile, createErr := os.Create(fileName)
-	assert.Nil(t, createErr)
-	defer tempFile.Close()
-
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	for x := 0; x < width; x++ {
-		for y := 0; y < height; y++ {
-			img.Set(x, y, color.RGBA{uint8(x * y % 256), 0, 0, 255})
-		}
-	}
-
-	encodeErr := jpeg.Encode(tempFile, img, nil)
-	assert.Nil(t, encodeErr)
-
-	tempFile, openErr := os.Open(fileName)
-	assert.Nil(t, openErr)
-	defer tempFile.Close()
-
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-
-	part, writerErr := writer.CreateFormFile("receipt", fileName)
-	assert.Nil(t, writerErr)
-
-	_, err := part.Write([]byte("fake content"))
-	assert.Nil(t, err)
-
-	writer.Close()
-
-	return body, writer
 }
 
 // GenerateUploadRequest prepares and uploads a test image to a specified URL
@@ -95,4 +62,21 @@ func GenerateUploadRequest(t *testing.T, url string, fileName string) (*http.Req
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	return req, nil
+}
+
+func InitTestServer(config *configs.Config) error {
+	tmpErr := os.MkdirAll(config.DIR_TMP, 0755)
+	if tmpErr != nil {
+		err := fmt.Errorf("os.Mkdir() failed, err: %s", tmpErr.Error())
+		return err
+	}
+	log.Printf("folder %s has been created", config.DIR_TMP)
+
+	imagesErr := os.MkdirAll(config.DIR_IMAGES, 0755)
+	if imagesErr != nil {
+		err := fmt.Errorf("os.Mkdir() failed, err: %s", imagesErr.Error())
+		return err
+	}
+	log.Printf("folder %s has been created", config.DIR_IMAGES)
+	return nil
 }

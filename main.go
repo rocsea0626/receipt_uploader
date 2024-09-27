@@ -5,10 +5,7 @@ import (
 	"log"
 	"net/http"
 	"receipt_uploader/constants"
-	"receipt_uploader/internal/futils"
-	"receipt_uploader/internal/http_utils"
-	"receipt_uploader/internal/images"
-	"receipt_uploader/internal/models/http_responses"
+	"receipt_uploader/internal/handlers"
 	"receipt_uploader/internal/utils"
 )
 
@@ -18,47 +15,18 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello, World!")
 }
 
-func receiptsHandler(w http.ResponseWriter, r *http.Request) {
-	tmpDir := "tmp"
-
-	if r.Method != http.MethodPost {
-		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	filePath, saveErr := utils.SaveUploadedImage(r, tmpDir)
-	if saveErr != nil {
-		log.Printf("utils.SaveUploadedImage() failed, err: %s", saveErr.Error())
-		resp := http_responses.ErrorResponse{
-			Error: constants.HTTP_ERR_MSG_500,
-		}
-		http_utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
-		return
-	}
-
-	genErr := images.GenerateImages(filePath, constants.OUTPUT_DIR)
-	if genErr != nil {
-		log.Printf("utils.GenerateImages() failed, err: %s", genErr.Error())
-		resp := http_responses.ErrorResponse{
-			Error: constants.HTTP_ERR_MSG_500,
-		}
-		http_utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
-		return
-	}
-
-	receiptID := futils.GetFileName(filePath)
-	resp := http_responses.UploadResponse{
-		ReceiptID: receiptID,
-	}
-	http_utils.SendUploadResponse(w, &resp)
-}
-
 func main() {
 	log.Println("initializing server")
-	utils.InitServer()
+	config, configErr := utils.LoadConfig()
+	if configErr != nil {
+		log.Printf("utils.LoadConfig() failed, err: %s", configErr.Error())
+		fmt.Println("failed to load config")
+		return
+	}
+	utils.InitServer(config)
 
 	http.HandleFunc("/health", helloHandler)
-	http.HandleFunc("/receipts", receiptsHandler)
+	http.HandleFunc("/receipts", handlers.ReceiptsHandler(config))
 
 	fmt.Printf("Starting server on %s", constants.PORT)
 	if err := http.ListenAndServe(constants.PORT, nil); err != nil {

@@ -12,13 +12,8 @@ import (
 	"github.com/nfnt/resize"
 )
 
-func ValidateImage(srcPath string) bool {
-
-	return true
-}
-
-func GenerateImages(srcPath string, outputDir string) error {
-	log.Printf("GenerateImages(srcPath: %s)", srcPath)
+func GenerateImages(srcPath string, destDir string) error {
+	log.Printf("GenerateImages(srcPath: %s, destDir: %s)", srcPath, destDir)
 
 	smallImg, resizeSmallErr := resizeImage(srcPath, constants.IMAGE_SIZE_W_S, constants.IMAGE_SIZE_H_S)
 	if resizeSmallErr != nil {
@@ -28,7 +23,7 @@ func GenerateImages(srcPath string, outputDir string) error {
 		)
 		return err
 	}
-	saveSmallErr := saveImage(smallImg, futils.GetOutputPath(srcPath, outputDir, "small"))
+	saveSmallErr := saveImage(&smallImg, futils.GetOutputPath(srcPath, destDir, "small"))
 	if saveSmallErr != nil {
 		err := fmt.Errorf("saveImage() failed, err: %s", saveSmallErr.Error())
 		return err
@@ -42,13 +37,13 @@ func GenerateImages(srcPath string, outputDir string) error {
 		)
 		return err
 	}
-	saveMediumErr := saveImage(mediumImg, futils.GetOutputPath(srcPath, outputDir, "medium"))
+	saveMediumErr := saveImage(&mediumImg, futils.GetOutputPath(srcPath, destDir, "medium"))
 	if saveMediumErr != nil {
 		err := fmt.Errorf("saveImage() failed, err: %s", saveMediumErr.Error())
 		return err
 	}
 
-	saveLargeErr := futils.CopyFile(srcPath, futils.GetOutputPath(srcPath, outputDir, "large"))
+	saveLargeErr := futils.CopyFile(srcPath, futils.GetOutputPath(srcPath, destDir, "large"))
 	if saveLargeErr != nil {
 		err := fmt.Errorf("futils.CopyFile() failed, err: %s", saveLargeErr.Error())
 		return err
@@ -57,8 +52,8 @@ func GenerateImages(srcPath string, outputDir string) error {
 	return nil
 }
 
-func resizeImage(filePath string, width, height int) (image.Image, error) {
-	file, err := os.Open(filePath)
+func resizeImage(srcPath string, width, height int) (image.Image, error) {
+	file, err := os.Open(srcPath)
 	if err != nil {
 		return nil, fmt.Errorf("os.Open() failed: %v", err)
 	}
@@ -73,14 +68,14 @@ func resizeImage(filePath string, width, height int) (image.Image, error) {
 	return resizedImg, nil
 }
 
-func saveImage(img image.Image, outputFilePath string) error {
-	outFile, createErr := os.Create(outputFilePath)
+func saveImage(img *image.Image, destPath string) error {
+	outFile, createErr := os.Create(destPath)
 	if createErr != nil {
 		return fmt.Errorf("os.Create() failed, err: %s", createErr.Error())
 	}
 	defer outFile.Close()
 
-	EncodeErr := jpeg.Encode(outFile, img, nil)
+	EncodeErr := jpeg.Encode(outFile, *img, nil)
 	if EncodeErr != nil {
 		return fmt.Errorf("jpeg.Encode() failed, err: %s", EncodeErr.Error())
 	}

@@ -19,14 +19,21 @@ import (
 func SaveUploadedImage(r *http.Request, tmpDir string) (string, error) {
 	log.Printf("SaveUploadedImage(tmpDir: %s)", tmpDir)
 
+	parseErr := r.ParseMultipartForm(10 << 20) // Maximum 10 MB
+	if parseErr != nil {
+		return "", fmt.Errorf("r.ParseMultipartForm() failed, err: %s", parseErr.Error())
+	}
+
 	file, header, fromErr := r.FormFile("receipt")
 	if fromErr != nil {
 		return "", fmt.Errorf("r.FormFile() failed: %w", fromErr)
 	}
 	log.Printf("content-type: %s", header.Header.Get("Content-Type"))
+	log.Printf("file size: %d", header.Size)
+
 	defer file.Close()
 
-	img, format, decodeErr := image.Decode(file)
+	img, _, decodeErr := image.Decode(file)
 	if decodeErr != nil {
 		return "", fmt.Errorf("image.Decode() failed, err: %s", decodeErr.Error())
 	}
@@ -34,7 +41,7 @@ func SaveUploadedImage(r *http.Request, tmpDir string) (string, error) {
 		return "", fmt.Errorf("invalid image size, minHeight=%d, minWidth=%d", constants.IMAGE_SIZE_MIN_H, constants.IMAGE_SIZE_MIN_W)
 	}
 
-	fileName := uuid.New().String() + "." + format
+	fileName := uuid.New().String() + ".jpg"
 	tmpPath := filepath.Join(tmpDir, fileName)
 
 	tmpFile, createErr := os.Create(tmpPath)
@@ -43,9 +50,35 @@ func SaveUploadedImage(r *http.Request, tmpDir string) (string, error) {
 	}
 	defer tmpFile.Close()
 
-	_, copyErr := io.Copy(tmpFile, file)
+	_, seekErr := file.Seek(0, io.SeekStart)
+	if seekErr != nil {
+		return "", fmt.Errorf("file.Seek() failed: %w", seekErr)
+	}
+
+	written, copyErr := io.Copy(tmpFile, file)
 	if copyErr != nil {
 		return "", fmt.Errorf("io.Copy() failed: %w", copyErr)
+	}
+	log.Printf("written: %d", written)
+
+	return tmpPath, nil
+}
+
+func SaveUpload(bytes []byte, tmpDir string) (string, error) {
+	log.Printf("SaveUpload(tmpDir: %s)", tmpDir)
+
+	fileName := uuid.New().String() + ".jpg"
+	tmpPath := filepath.Join(tmpDir, fileName)
+
+	tmpFile, createErr := os.Create(tmpPath)
+	if createErr != nil {
+		return "", fmt.Errorf("os.Create() failed: %w", createErr)
+	}
+	defer tmpFile.Close()
+
+	_, copyErr := tmpFile.Write(bytes)
+	if copyErr != nil {
+		return "", fmt.Errorf("file.Write() failed: %w", copyErr)
 	}
 
 	return tmpPath, nil
@@ -71,17 +104,19 @@ func LoadConfig() (*configs.Config, error) {
 	return config, nil
 }
 
-func InitServer() error {
-	tmpErr := os.Mkdir("tmp", 0755)
+func InitServer(config *configs.Config) error {
+	tmpErr := os.Mkdir(config.DIR_TMP, 0755)
 	if tmpErr != nil {
 		err := fmt.Errorf("os.Mkdir() failed, err: %s", tmpErr.Error())
 		return err
 	}
+	log.Printf("folder %s has been created", config.DIR_TMP)
 
-	imagesErr := os.Mkdir("images", 0755)
+	imagesErr := os.Mkdir(config.DIR_IMAGES, 0755)
 	if imagesErr != nil {
 		err := fmt.Errorf("os.Mkdir() failed, err: %s", imagesErr.Error())
 		return err
 	}
+	log.Printf("folder %s has been created", config.DIR_IMAGES)
 	return nil
 }
