@@ -7,6 +7,7 @@ import (
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/futils"
 	"receipt_uploader/internal/http_utils"
+	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/models/http_responses"
 	"receipt_uploader/internal/utils"
 )
@@ -35,7 +36,7 @@ func receiptsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	genErr := utils.GenerateImages(filePath, constants.OUTPUT_DIR)
+	genErr := images.GenerateImages(filePath, constants.OUTPUT_DIR)
 	if genErr != nil {
 		log.Printf("utils.GenerateImages() failed, err: %s", genErr.Error())
 		resp := http_responses.ErrorResponse{

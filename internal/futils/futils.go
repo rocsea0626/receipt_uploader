@@ -37,7 +37,7 @@ func GetFileName(filePath string) string {
 	return fName
 }
 
-// getOutputPath() generates a file path for the output file by taking an input file path,
+// GetOutputPath() generates a file path for the output file by taking an input file path,
 // an output directory, and size is appended to the file name as suffix.
 //
 // Example:
