@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"receipt_uploader/constants"
+	"receipt_uploader/internal/http_utils"
 	"receipt_uploader/internal/models/http_responses"
 	"receipt_uploader/internal/utils"
 )
@@ -29,7 +30,7 @@ func receiptsHandler(w http.ResponseWriter, r *http.Request) {
 		resp := http_responses.ErrorResponse{
 			Error: constants.HTTP_ERR_MSG_500,
 		}
-		utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
+		http_utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
 		return
 	}
 
@@ -39,7 +40,7 @@ func receiptsHandler(w http.ResponseWriter, r *http.Request) {
 		resp := http_responses.ErrorResponse{
 			Error: constants.HTTP_ERR_MSG_500,
 		}
-		utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
+		http_utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
 		return
 	}
 
@@ -47,7 +48,7 @@ func receiptsHandler(w http.ResponseWriter, r *http.Request) {
 	resp := http_responses.UploadResponse{
 		ReceiptID: receiptID,
 	}
-	utils.SendUploadResponse(w, &resp)
+	http_utils.SendUploadResponse(w, &resp)
 }
 
 func main() {

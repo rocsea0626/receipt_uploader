@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"encoding/json"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -13,7 +12,6 @@ import (
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/futils"
 	"receipt_uploader/internal/models/configs"
-	"receipt_uploader/internal/models/http_responses"
 	"strings"
 
 	"github.com/google/uuid"
@@ -140,26 +138,6 @@ func GetFileName(filePath string) string {
 	extension := filepath.Ext(filePath)
 	fName := strings.TrimSuffix(base, extension)
 	return fName
-}
-
-func SendErrorResponse(w http.ResponseWriter, resp *http_responses.ErrorResponse, status int) {
-	errMap := map[string]string{
-		"error": resp.Error,
-	}
-	sendResponse(w, &errMap, status)
-}
-
-func SendUploadResponse(w http.ResponseWriter, resp *http_responses.UploadResponse) {
-	respMap := map[string]string{
-		"receiptId": resp.ReceiptID,
-	}
-	sendResponse(w, &respMap, http.StatusCreated)
-}
-
-func sendResponse(w http.ResponseWriter, response *map[string]string, status int) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(*response)
 }
 
 func LoadConfig() (*configs.Config, error) {
