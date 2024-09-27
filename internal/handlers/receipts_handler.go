@@ -19,7 +19,7 @@ func ReceiptsHandler(config *configs.Config, imagesService images.ServiceType) h
 		case http.MethodGet:
 			handleGet(w, r, config)
 		case http.MethodPost:
-			handlePost(w, r, config, imagesService)
+			handlePost(w, r, imagesService)
 		default:
 			resp := http_responses.ErrorResponse{
 				Error: constants.HTTP_ERR_MSG_405,
@@ -29,7 +29,7 @@ func ReceiptsHandler(config *configs.Config, imagesService images.ServiceType) h
 	}
 }
 
-func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, imagesService images.ServiceType) {
+func handlePost(w http.ResponseWriter, r *http.Request, imagesService images.ServiceType) {
 	bytes, decodeErr := imagesService.DecodeImage(r)
 	if decodeErr != nil {
 		log.Printf("http_utils.DecodeImage() failed, err: %s", decodeErr.Error())
@@ -39,7 +39,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		http_utils.SendErrorResponse(w, &resp, http.StatusBadRequest)
 	}
 
-	tmpFilePath, saveErr := imagesService.SaveUpload(bytes, config.DIR_TMP)
+	tmpFilePath, saveErr := imagesService.SaveUpload(bytes)
 	if saveErr != nil {
 		log.Printf("utils.SaveUpload() failed, err: %s", saveErr.Error())
 		resp := http_responses.ErrorResponse{
@@ -49,7 +49,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		return
 	}
 
-	genErr := imagesService.GenerateImages(tmpFilePath, config.DIR_IMAGES)
+	genErr := imagesService.GenerateImages(tmpFilePath)
 	if genErr != nil {
 		log.Printf("images.GenerateImages() failed, err: %s", genErr.Error())
 		resp := http_responses.ErrorResponse{

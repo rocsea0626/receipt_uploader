@@ -3,7 +3,7 @@ package images
 import "net/http"
 
 type ServiceType interface {
-	GenerateImages(srcPath string, destDir string) error
-	SaveUpload(bytes []byte, tmpDir string) (string, error)
+	GenerateImages(srcPath string) error
+	SaveUpload(bytes []byte) (string, error)
 	DecodeImage(r *http.Request) ([]byte, error)
 }

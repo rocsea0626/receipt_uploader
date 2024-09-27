@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"receipt_uploader/internal/futils"
+	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/test_utils"
 	"testing"
 
@@ -18,13 +19,17 @@ func TestGenerateImages(t *testing.T) {
 	os.MkdirAll(outputDir, 0755)
 	defer os.RemoveAll(outputDir)
 
-	service := NewService()
+	config := configs.Config{
+		DIR_IMAGES: outputDir,
+	}
+
+	service := NewService(&config)
 
 	t.Run("succeed", func(t *testing.T) {
 		createErr := test_utils.CreateTestImage(inputPath, 800, 1200)
 		assert.Nil(t, createErr)
 
-		genErr := service.GenerateImages(inputPath, outputDir)
+		genErr := service.GenerateImages(inputPath)
 		assert.Nil(t, genErr)
 
 		smallImagePath := futils.GetOutputPath(inputPath, outputDir, "small")

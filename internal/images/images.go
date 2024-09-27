@@ -12,20 +12,25 @@ import (
 	"path/filepath"
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/futils"
+	"receipt_uploader/internal/models/configs"
 
 	"github.com/google/uuid"
 	"github.com/nfnt/resize"
 )
 
 type Service struct {
+	Config *configs.Config
 }
 
-func NewService() ServiceType {
-	return &Service{}
+func NewService(config *configs.Config) ServiceType {
+	return &Service{
+		Config: config,
+	}
 }
 
-func (s *Service) GenerateImages(srcPath string, destDir string) error {
-	log.Printf("GenerateImages(srcPath: %s, destDir: %s)", srcPath, destDir)
+func (s *Service) GenerateImages(srcPath string) error {
+	log.Printf("GenerateImages(srcPath: %s)", srcPath)
+	destDir := s.Config.DIR_IMAGES
 
 	smallImg, resizeSmallErr := resizeImage(srcPath, constants.IMAGE_SIZE_W_S, constants.IMAGE_SIZE_H_S)
 	if resizeSmallErr != nil {
@@ -98,11 +103,11 @@ func (s *Service) DecodeImage(r *http.Request) ([]byte, error) {
 	return fileBytes, nil
 }
 
-func (s *Service) SaveUpload(bytes []byte, tmpDir string) (string, error) {
-	log.Printf("SaveUpload(tmpDir: %s)", tmpDir)
+func (s *Service) SaveUpload(bytes []byte) (string, error) {
+	log.Printf("SaveUpload()")
 
 	fileName := uuid.New().String() + ".jpg"
-	destPath := filepath.Join(tmpDir, fileName)
+	destPath := filepath.Join(s.Config.DIR_TMP, fileName)
 
 	saveImage(&bytes, destPath)
 

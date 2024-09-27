@@ -157,8 +157,7 @@ func StartServer(config *configs.Config) {
 		return
 	}
 	fmt.Printf("folder %s has been created\n", config.DIR_IMAGES)
-
-	imagesService := images.NewService()
+	imagesService := images.NewService(config)
 
 	http.HandleFunc("/health", handlers.HealthHandler())
 	http.HandleFunc("/receipts", handlers.ReceiptsHandler(config, imagesService))

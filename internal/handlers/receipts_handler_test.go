@@ -24,7 +24,7 @@ func TestReceiptsHandler(t *testing.T) {
 	defer os.RemoveAll(config.DIR_TMP)
 	defer os.RemoveAll(config.DIR_IMAGES)
 
-	imagesService := images.NewService()
+	imagesService := images.NewService(&config)
 
 	t.Run("GET method should return 501 Not Implemented", func(t *testing.T) {
 		t.Skip()
@@ -93,9 +93,11 @@ func TestReceiptsHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		mockImagesService := images_mock.ServiceMock{}
 		mockConfig := configs.Config{
 			DIR_IMAGES: "mock_generate_images_failed",
+		}
+		mockImagesService := images_mock.ServiceMock{
+			Config: &mockConfig,
 		}
 		handler := ReceiptsHandler(&mockConfig, &mockImagesService)
 
