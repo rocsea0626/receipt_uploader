@@ -6,4 +6,5 @@ type ServiceType interface {
 	GenerateImages(srcPath string) error
 	SaveUpload(bytes []byte) (string, error)
 	DecodeImage(r *http.Request) ([]byte, error)
+	GetImage(receiptId, size string) ([]byte, string, error)
 }

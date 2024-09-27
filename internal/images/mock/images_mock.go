@@ -28,3 +28,8 @@ func (s *ServiceMock) SaveUpload(bytes []byte) (string, error) {
 	log.Println("images_mock.SaveUpload()")
 	return "", nil
 }
+
+func (s *ServiceMock) GetImage(receiptId, size string) ([]byte, string, error) {
+	log.Println("images_mock.GetImage()")
+	return nil, "", nil
+}

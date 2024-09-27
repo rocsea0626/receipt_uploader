@@ -5,6 +5,7 @@ const (
 	OUTPUT_DIR       = "images"
 	HTTP_ERR_MSG_500 = "internal server error"
 	HTTP_ERR_MSG_400 = "invalid image"
+	HTTP_ERR_MSG_404 = "image not found"
 	HTTP_ERR_MSG_405 = "method not allowed"
 	IMAGE_SIZE_MIN_W = 600
 	IMAGE_SIZE_MIN_H = 800

@@ -114,6 +114,23 @@ func (s *Service) SaveUpload(bytes []byte) (string, error) {
 	return destPath, nil
 }
 
+func (s *Service) GetImage(receiptId, size string) ([]byte, string, error) {
+	log.Printf("GetImage(receiptId: %s, size: %s)", receiptId, size)
+
+	fName := fmt.Sprintf("%s_%s.jpg", receiptId, size)
+	fPath := fmt.Sprintf("%s/%s", s.Config.DIR_IMAGES, fName)
+	log.Printf("fPath: %s", fPath)
+
+	fileBytes, readErr := os.ReadFile(fPath)
+	if readErr != nil {
+		if os.IsNotExist(readErr) {
+			return nil, "", readErr
+		}
+		return nil, "", fmt.Errorf("os.ReadFile() failed: %v", readErr)
+	}
+	return fileBytes, fName, nil
+}
+
 func resizeImage(srcPath string, width, height int) ([]byte, error) {
 	file, err := os.Open(srcPath)
 	if err != nil {
@@ -135,21 +152,6 @@ func resizeImage(srcPath string, width, height int) ([]byte, error) {
 
 	return buf.Bytes(), nil
 }
-
-// func saveImage(img *image.Image, destPath string) error {
-// 	outFile, createErr := os.Create(destPath)
-// 	if createErr != nil {
-// 		return fmt.Errorf("os.Create() failed, err: %s", createErr.Error())
-// 	}
-// 	defer outFile.Close()
-
-// 	EncodeErr := jpeg.Encode(outFile, *img, nil)
-// 	if EncodeErr != nil {
-// 		return fmt.Errorf("jpeg.Encode() failed, err: %s", EncodeErr.Error())
-// 	}
-
-// 	return nil
-// }
 
 func saveImage(bytes *[]byte, destPath string) error {
 	destFile, createErr := os.Create(destPath)

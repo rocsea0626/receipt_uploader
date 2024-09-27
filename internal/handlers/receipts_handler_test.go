@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/images"
 	images_mock "receipt_uploader/internal/images/mock"
@@ -14,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestReceiptsHandler(t *testing.T) {
+func TestReceiptsPostHandler(t *testing.T) {
 	config := configs.Config{
 		DIR_TMP:    "./mock-tmp",
 		DIR_IMAGES: "./mock-images",
@@ -25,30 +27,6 @@ func TestReceiptsHandler(t *testing.T) {
 	defer os.RemoveAll(config.DIR_IMAGES)
 
 	imagesService := images.NewService(&config)
-
-	t.Run("GET method should return 501 Not Implemented", func(t *testing.T) {
-		t.Skip()
-		req, err := http.NewRequest(http.MethodGet, "/receipts", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		rr := httptest.NewRecorder()
-		handler := ReceiptsHandler(&config, imagesService)
-
-		handler.ServeHTTP(rr, req)
-
-		if status := rr.Code; status != http.StatusNotImplemented {
-			t.Errorf("handler returned wrong status code: got %v want %v",
-				status, http.StatusNotImplemented)
-		}
-
-		expected := "GET method is not yet implemented"
-		if rr.Body.String() != expected {
-			t.Errorf("handler returned unexpected body: got %v want %v",
-				rr.Body.String(), expected)
-		}
-	})
 
 	t.Run("succeed, POST, 1200x1200 image", func(t *testing.T) {
 		fileName := "test_image_save_upload.jpg"
@@ -120,5 +98,40 @@ func TestReceiptsHandler(t *testing.T) {
 
 		status := rr.Code
 		assert.Equal(t, http.StatusMethodNotAllowed, status)
+	})
+}
+
+func TestReceiptsGetHandler(t *testing.T) {
+	config := configs.Config{
+		DIR_TMP:    "./mock-get-tmp",
+		DIR_IMAGES: "./mock-get-images",
+	}
+
+	test_utils.InitTestServer(&config)
+	defer os.RemoveAll(config.DIR_TMP)
+	defer os.RemoveAll(config.DIR_IMAGES)
+
+	imagesService := images.NewService(&config)
+	t.Run("return 200, size=small", func(t *testing.T) {
+		receiptId := "test-get-image"
+		size := "small"
+		fileName := receiptId + "_" + size + ".jpg"
+		fPath := filepath.Join(config.DIR_IMAGES, fileName)
+
+		createErr := test_utils.CreateTestImage(fPath, 300, 300)
+		assert.Nil(t, createErr)
+
+		url := "/receipts/" + receiptId + "?size=small"
+		log.Printf("url: %s", url)
+		req, reqErr := http.NewRequest(http.MethodGet, url, nil)
+		assert.Nil(t, reqErr)
+
+		rr := httptest.NewRecorder()
+		handler := ReceiptsHandler(&config, imagesService)
+
+		handler.ServeHTTP(rr, req)
+
+		status := rr.Code
+		assert.Equal(t, http.StatusOK, status)
 	})
 }
