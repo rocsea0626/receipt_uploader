@@ -4,6 +4,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"receipt_uploader/constants"
+	"receipt_uploader/internal/images"
+	images_mock "receipt_uploader/internal/images/mock"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/test_utils"
 	"testing"
@@ -21,6 +24,8 @@ func TestReceiptsHandler(t *testing.T) {
 	defer os.RemoveAll(config.DIR_TMP)
 	defer os.RemoveAll(config.DIR_IMAGES)
 
+	imagesService := images.NewService()
+
 	t.Run("GET method should return 501 Not Implemented", func(t *testing.T) {
 		t.Skip()
 		req, err := http.NewRequest(http.MethodGet, "/receipts", nil)
@@ -29,7 +34,7 @@ func TestReceiptsHandler(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		handler := ReceiptsHandler(&config)
+		handler := ReceiptsHandler(&config, imagesService)
 
 		handler.ServeHTTP(rr, req)
 
@@ -56,7 +61,7 @@ func TestReceiptsHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := ReceiptsHandler(&config)
+		handler := ReceiptsHandler(&config, imagesService)
 
 		handler.ServeHTTP(rr, req)
 
@@ -75,7 +80,7 @@ func TestReceiptsHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := ReceiptsHandler(&config)
+		handler := ReceiptsHandler(&config, imagesService)
 
 		handler.ServeHTTP(rr, req)
 
@@ -83,12 +88,31 @@ func TestReceiptsHandler(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, status)
 	})
 
+	t.Run("should fail, GenerateImages() failed", func(t *testing.T) {
+		req, reqErr := http.NewRequest(http.MethodPost, "/receipts", nil)
+		assert.Nil(t, reqErr)
+
+		rr := httptest.NewRecorder()
+		mockImagesService := images_mock.ServiceMock{}
+		mockConfig := configs.Config{
+			DIR_IMAGES: "mock_generate_images_failed",
+		}
+		handler := ReceiptsHandler(&mockConfig, &mockImagesService)
+
+		handler.ServeHTTP(rr, req)
+
+		status := rr.Code
+		body := rr.Body.String()
+		assert.Equal(t, http.StatusInternalServerError, status)
+		assert.Contains(t, body, constants.HTTP_ERR_MSG_500)
+	})
+
 	t.Run("should fail, not allowed method", func(t *testing.T) {
 		req, reqErr := http.NewRequest(http.MethodDelete, "/receipts", nil)
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := ReceiptsHandler(&config)
+		handler := ReceiptsHandler(&config, imagesService)
 
 		handler.ServeHTTP(rr, req)
 

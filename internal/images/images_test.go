@@ -1,6 +1,8 @@
 package images
 
 import (
+	"bytes"
+	"image"
 	"os"
 	"path/filepath"
 	"receipt_uploader/internal/futils"
@@ -16,11 +18,13 @@ func TestGenerateImages(t *testing.T) {
 	os.MkdirAll(outputDir, 0755)
 	defer os.RemoveAll(outputDir)
 
+	service := NewService()
+
 	t.Run("succeed", func(t *testing.T) {
 		createErr := test_utils.CreateTestImage(inputPath, 800, 1200)
 		assert.Nil(t, createErr)
 
-		genErr := GenerateImages(inputPath, outputDir)
+		genErr := service.GenerateImages(inputPath, outputDir)
 		assert.Nil(t, genErr)
 
 		smallImagePath := futils.GetOutputPath(inputPath, outputDir, "small")
@@ -39,6 +43,7 @@ func TestGenerateImages(t *testing.T) {
 }
 
 func TestResizeImage(t *testing.T) {
+
 	t.Run("succeed", func(t *testing.T) {
 		testFilePath := "test_resize_image.jpg"
 		orgWidth := 800
@@ -50,10 +55,13 @@ func TestResizeImage(t *testing.T) {
 		height := orgHeight / 5
 		width := orgWidth / 5
 
-		resizedImg, resizeErr := resizeImage(testFilePath, 0, height) // use 0 for width for keep the original ratio of image
+		resizedBytes, resizeErr := resizeImage(testFilePath, 0, height) // use 0 for width for keep the original ratio of image
 		assert.Nil(t, resizeErr)
 
-		bounds := resizedImg.Bounds()
+		reader := bytes.NewReader(resizedBytes)
+		img, _, err := image.Decode(reader)
+		assert.Nil(t, err)
+		bounds := img.Bounds()
 		assert.Equal(t, height, bounds.Dy())
 		assert.Equal(t, width, bounds.Dx())
 	})
@@ -61,8 +69,8 @@ func TestResizeImage(t *testing.T) {
 	t.Run("should fail, non existing file", func(t *testing.T) {
 		testFilePath := "non-existing.jpg"
 
-		resizedImg, resizeErr := resizeImage(testFilePath, 0, 100)
-		assert.Nil(t, resizedImg)
+		resizedBytes, resizeErr := resizeImage(testFilePath, 0, 100)
+		assert.Nil(t, resizedBytes)
 		assert.NotNil(t, resizeErr)
 		assert.Contains(t, resizeErr.Error(), "os.Open() failed:")
 	})
@@ -73,8 +81,8 @@ func TestResizeImage(t *testing.T) {
 		writeErr := os.WriteFile(fPath, invalidContent, 0644)
 		assert.Nil(t, writeErr)
 
-		resizedImg, err := resizeImage(fPath, 100, 100)
-		assert.Nil(t, resizedImg)
+		resizedBytes, err := resizeImage(fPath, 100, 100)
+		assert.Nil(t, resizedBytes)
 		assert.NotNil(t, err)
 		assert.Contains(t, err.Error(), "image.Decode() failed:")
 	})
@@ -89,10 +97,10 @@ func TestSaveImage(t *testing.T) {
 		createImgErr := test_utils.CreateTestImage(fPath, 100, 100)
 		assert.Nil(t, createImgErr)
 
-		resizedImg, resizeErr := resizeImage(fPath, 0, 100)
+		resizedBytes, resizeErr := resizeImage(fPath, 0, 100)
 		assert.Nil(t, resizeErr)
 
-		saveErr := saveImage(&resizedImg, destPath)
+		saveErr := saveImage(&resizedBytes, destPath)
 		assert.Nil(t, saveErr)
 
 		assert.FileExists(t, destPath)
@@ -109,10 +117,10 @@ func TestSaveImage(t *testing.T) {
 		createImgErr := test_utils.CreateTestImage(fPath, 100, 100)
 		assert.Nil(t, createImgErr)
 
-		resizedImg, resizeErr := resizeImage(fPath, 0, 100)
+		resizedBytes, resizeErr := resizeImage(fPath, 0, 100)
 		assert.Nil(t, resizeErr)
 
-		saveErr := saveImage(&resizedImg, destPath)
+		saveErr := saveImage(&resizedBytes, destPath)
 		assert.NotNil(t, saveErr)
 		assert.Contains(t, saveErr.Error(), "os.Create() failed, err:")
 	})

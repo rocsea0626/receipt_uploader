@@ -6,8 +6,11 @@ import (
 	"net/http"
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/handlers"
+	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/utils"
 )
+
+var imagesService images.ServiceType
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
@@ -24,9 +27,10 @@ func main() {
 		return
 	}
 	utils.InitServer(config)
+	imagesService = images.NewService()
 
 	http.HandleFunc("/health", helloHandler)
-	http.HandleFunc("/receipts", handlers.ReceiptsHandler(config))
+	http.HandleFunc("/receipts", handlers.ReceiptsHandler(config, imagesService))
 
 	fmt.Printf("Starting server on %s", constants.PORT)
 	if err := http.ListenAndServe(constants.PORT, nil); err != nil {
