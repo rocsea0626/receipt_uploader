@@ -2,6 +2,7 @@ package constants
 
 const (
 	PORT             = ":8080"
+	OUTPUT_DIR       = "images"
 	HTTP_ERR_MSG_500 = "internal server error"
 	IMAGE_SIZE_W_S   = 120
 	IMAGE_SIZE_H_S   = 90

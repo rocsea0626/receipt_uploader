@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/models/http_responses"
@@ -15,29 +16,48 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func receiptsHandler(w http.ResponseWriter, r *http.Request) {
-	const uploadPath = "./uploads/"
+	tmpDir := "tmp"
 
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	fileName, saveErr := utils.SaveUploadImage(r)
+	filePath, saveErr := utils.SaveUploadedImage(r, tmpDir)
 	if saveErr != nil {
-		http_responses.SendErrorResponse(w, &http_responses.ErrorResponse{
+		log.Printf("utils.SaveUploadedImage() failed, err: %s", saveErr.Error())
+		resp := http_responses.ErrorResponse{
 			Error: constants.HTTP_ERR_MSG_500,
-		}, http.StatusInternalServerError)
+		}
+		utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
 		return
 	}
 
-	w.Write([]byte(fmt.Sprintf("File uploaded successfully: %s", fileName)))
+	genErr := utils.GenerateImages(filePath, constants.OUTPUT_DIR)
+	if genErr != nil {
+		log.Printf("utils.GenerateImages() failed, err: %s", genErr.Error())
+		resp := http_responses.ErrorResponse{
+			Error: constants.HTTP_ERR_MSG_500,
+		}
+		utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
+		return
+	}
+
+	receiptID := utils.GetFileName(filePath)
+	resp := http_responses.UploadResponse{
+		ReceiptID: receiptID,
+	}
+	utils.SendUploadResponse(w, &resp)
 }
 
 func main() {
+	log.Println("initializing server")
+	utils.InitServer()
+
 	http.HandleFunc("/health", helloHandler)
 	http.HandleFunc("/receipts", receiptsHandler)
 
-	fmt.Println("Starting server on :8080")
+	fmt.Printf("Starting server on %s", constants.PORT)
 	if err := http.ListenAndServe(constants.PORT, nil); err != nil {
 		fmt.Println("Error starting server:", err)
 	}
