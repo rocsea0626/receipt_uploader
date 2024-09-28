@@ -118,8 +118,8 @@ func StartServer(config *configs.Config) {
 	imagesService := images.NewService(config)
 
 	http.HandleFunc("/health", handlers.HealthHandler())
-	http.HandleFunc("/receipts", handlers.ReceiptsHandler(config, imagesService))
-	http.HandleFunc("/receipts/{receiptId}", handlers.ReceiptsHandler(config, imagesService))
+	http.HandleFunc("/receipts", handlers.UploadReceiptHandler(config, imagesService))
+	http.HandleFunc("/receipts/{receiptId}", handlers.DownloadReceiptHandler(config, imagesService))
 
 	fmt.Printf("Starting server on %s", constants.PORT)
 	if err := http.ListenAndServe(constants.PORT, nil); err != nil {
