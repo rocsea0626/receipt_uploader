@@ -5,7 +5,7 @@ import (
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/http_utils"
 	"receipt_uploader/internal/models/http_responses"
-	"strings"
+	"regexp"
 )
 
 func Auth(next http.Handler) http.Handler {
@@ -25,9 +25,6 @@ func Auth(next http.Handler) http.Handler {
 }
 
 func isValidUsernameToken(token string) bool {
-	tToken := strings.TrimSpace(token)
-	if tToken == "invalid_token" {
-		return false
-	}
-	return tToken != ""
+	p := regexp.MustCompile("^[a-z0-9_]+$")
+	return p.MatchString(token)
 }
