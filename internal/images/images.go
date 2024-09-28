@@ -28,6 +28,12 @@ func NewService() ServiceType {
 func (s *Service) GenerateImages(srcPath, destDir string) error {
 	log.Printf("GenerateImages(srcPath: %s, destDir: %s)", srcPath, destDir)
 
+	mkErr := os.MkdirAll(destDir, 0755)
+	if mkErr != nil {
+		err := fmt.Errorf("os.Mkdir() failed, err: %s", mkErr.Error())
+		return err
+	}
+
 	smallImg, resizeSmallErr := resizeImage(srcPath, constants.IMAGE_SIZE_W_S, constants.IMAGE_SIZE_H_S)
 	if resizeSmallErr != nil {
 		return fmt.Errorf(

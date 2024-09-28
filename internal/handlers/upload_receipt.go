@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"path/filepath"
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/futils"
 	"receipt_uploader/internal/http_utils"
@@ -28,7 +29,7 @@ func UploadReceipt(config *configs.Config, imagesService images.ServiceType) htt
 
 func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, imagesService images.ServiceType) {
 	log.Println("handlePost()")
-	// username := r.Header.Get("username_token")
+	username := r.Header.Get("username_token")
 
 	bytes, decodeErr := imagesService.DecodeImage(r)
 	if decodeErr != nil {
@@ -50,7 +51,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		return
 	}
 
-	destDir := config.GeneratedDir
+	destDir := filepath.Join(config.GeneratedDir, username)
 	genErr := imagesService.GenerateImages(tmpFilePath, destDir)
 	if genErr != nil {
 		log.Printf("images.GenerateImages() failed, err: %s", genErr.Error())

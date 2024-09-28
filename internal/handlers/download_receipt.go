@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/http_utils"
 	"receipt_uploader/internal/images"
@@ -28,6 +29,7 @@ func DownloadReceipt(config *configs.Config, imagesService images.ServiceType) h
 
 func handleGet(w http.ResponseWriter, r *http.Request, config *configs.Config, imagesService images.ServiceType) {
 	log.Printf("handleGet(), path: %s", r.URL.Path)
+	username := r.Header.Get("username_token")
 
 	receiptId, size, validateErr := http_utils.ValidateGetImageRequest(r)
 	if validateErr != nil {
@@ -39,7 +41,8 @@ func handleGet(w http.ResponseWriter, r *http.Request, config *configs.Config, i
 		return
 	}
 
-	fileBytes, fileName, getErr := imagesService.GetImage(receiptId, size, config.GeneratedDir)
+	srcDir := filepath.Join(config.GeneratedDir, username)
+	fileBytes, fileName, getErr := imagesService.GetImage(receiptId, size, srcDir)
 	if getErr != nil {
 		log.Printf("images.GetImage() failed, err: %s", getErr.Error())
 		if os.IsNotExist(getErr) {
