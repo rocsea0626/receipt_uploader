@@ -19,13 +19,13 @@ import (
 
 func TestReceiptsPostHandler(t *testing.T) {
 	config := configs.Config{
-		DIR_TMP:    "./mock-tmp",
-		DIR_IMAGES: "./mock-images",
+		UploadedDir:  "./mock-tmp",
+		GeneratedDir: "./mock-images",
 	}
 
 	test_utils.InitTestServer(&config)
-	defer os.RemoveAll(config.DIR_TMP)
-	defer os.RemoveAll(config.DIR_IMAGES)
+	defer os.RemoveAll(config.UploadedDir)
+	defer os.RemoveAll(config.GeneratedDir)
 
 	imagesService := images.NewService(&config)
 
@@ -69,7 +69,7 @@ func TestReceiptsPostHandler(t *testing.T) {
 
 	t.Run("should fail, GenerateImages() failed", func(t *testing.T) {
 		mockConfig := configs.Config{
-			DIR_IMAGES: "mock_generate_images_failed",
+			GeneratedDir: "mock_generate_images_failed",
 		}
 		mockImagesService := images_mock.ServiceMock{
 			Config: &mockConfig,
@@ -105,20 +105,20 @@ func TestReceiptsPostHandler(t *testing.T) {
 
 func TestReceiptsGetHandler(t *testing.T) {
 	config := configs.Config{
-		DIR_TMP:    "./mock-get-tmp",
-		DIR_IMAGES: "./mock-get-images",
+		UploadedDir:  "./mock-get-tmp",
+		GeneratedDir: "./mock-get-images",
 	}
 
 	test_utils.InitTestServer(&config)
-	defer os.RemoveAll(config.DIR_TMP)
-	defer os.RemoveAll(config.DIR_IMAGES)
+	defer os.RemoveAll(config.UploadedDir)
+	defer os.RemoveAll(config.GeneratedDir)
 
 	imagesService := images.NewService(&config)
 	t.Run("return 200, size=small", func(t *testing.T) {
 		receiptId := "testgetimage"
 		size := "small"
 		fileName := receiptId + "_" + size + ".jpg"
-		fPath := filepath.Join(config.DIR_IMAGES, fileName)
+		fPath := filepath.Join(config.GeneratedDir, fileName)
 
 		createErr := test_utils.CreateTestImage(fPath, 300, 300)
 		assert.Nil(t, createErr)
@@ -190,7 +190,7 @@ func TestReceiptsGetHandler(t *testing.T) {
 
 	t.Run("return 500, GetImage() failed", func(t *testing.T) {
 		mockConfig := configs.Config{
-			DIR_IMAGES: "mock_get_image_failed",
+			GeneratedDir: "mock_get_image_failed",
 		}
 		mockImagesService := images_mock.ServiceMock{
 			Config: &mockConfig,

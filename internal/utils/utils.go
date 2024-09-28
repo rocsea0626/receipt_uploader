@@ -90,9 +90,9 @@ func LoadConfig() (*configs.Config, error) {
 	}
 
 	config := &configs.Config{
-		Port:       os.Getenv("PORT"),
-		DIR_TMP:    os.Getenv("DIR_TMP"),
-		DIR_IMAGES: os.Getenv("DIR_IMAGES"),
+		Port:         os.Getenv("PORT"),
+		UploadedDir:  filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_TMP")),
+		GeneratedDir: filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_IMAGES")),
 	}
 
 	return config, nil
@@ -101,19 +101,20 @@ func LoadConfig() (*configs.Config, error) {
 func StartServer(config *configs.Config) {
 	log.Println("starting server...")
 
-	tmpErr := os.MkdirAll(config.DIR_TMP, 0755)
+	fmt.Printf("creating dir: %s to store uploaded receipts\n", config.UploadedDir)
+	tmpErr := os.MkdirAll(config.UploadedDir, 0755)
 	if tmpErr != nil {
 		fmt.Printf("failed to start server, err: %s", tmpErr.Error())
 		return
 	}
-	fmt.Printf("folder %s has been created\n", config.DIR_TMP)
 
-	imagesErr := os.MkdirAll(config.DIR_IMAGES, 0755)
+	fmt.Printf("creating dir: %s to store generated images of receipts\n", config.GeneratedDir)
+	imagesErr := os.MkdirAll(config.GeneratedDir, 0755)
 	if imagesErr != nil {
 		fmt.Printf("failed to start server, err: %s", imagesErr.Error())
 		return
 	}
-	fmt.Printf("folder %s has been created\n", config.DIR_IMAGES)
+
 	imagesService := images.NewService(config)
 
 	http.HandleFunc("/health", handlers.HealthHandler())

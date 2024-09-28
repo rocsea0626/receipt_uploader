@@ -4,6 +4,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	"receipt_uploader/constants"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/test_utils"
 	"receipt_uploader/internal/utils"
@@ -14,14 +16,14 @@ import (
 
 func TestMain(t *testing.T) {
 	config := &configs.Config{
-		Port:       ":8080",
-		DIR_TMP:    "integ-test-tmp",
-		DIR_IMAGES: "integ-test-images",
+		Port:         ":8080",
+		UploadedDir:  filepath.Join(constants.ROOT_DIR_IMAGES, "integ-test-tmp"),
+		GeneratedDir: filepath.Join(constants.ROOT_DIR_IMAGES, "integ-test-images"),
 	}
 	baseUrl := "http://localhost" + config.Port
 
-	defer os.RemoveAll(config.DIR_TMP)
-	defer os.RemoveAll(config.DIR_IMAGES)
+	defer os.RemoveAll(config.UploadedDir)
+	defer os.RemoveAll(config.GeneratedDir)
 
 	go utils.StartServer(config)
 

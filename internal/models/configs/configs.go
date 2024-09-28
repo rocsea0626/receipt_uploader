@@ -1,7 +1,7 @@
 package configs
 
 type Config struct {
-	DIR_TMP    string
-	DIR_IMAGES string
-	Port       string
+	UploadedDir  string // dir to store uploaded receipts
+	GeneratedDir string // dir to store generated images
+	Port         string
 }

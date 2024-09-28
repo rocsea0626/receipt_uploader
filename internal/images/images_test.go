@@ -20,7 +20,7 @@ func TestGenerateImages(t *testing.T) {
 	defer os.RemoveAll(outputDir)
 
 	config := configs.Config{
-		DIR_IMAGES: outputDir,
+		GeneratedDir: outputDir,
 	}
 
 	service := NewService(&config)
@@ -133,10 +133,10 @@ func TestSaveImage(t *testing.T) {
 
 func TestGetImage(t *testing.T) {
 	config := configs.Config{
-		DIR_IMAGES: "./mock-get-images/",
+		GeneratedDir: "./mock-get-images/",
 	}
-	os.MkdirAll(config.DIR_IMAGES, 0755)
-	defer os.RemoveAll(config.DIR_IMAGES)
+	os.MkdirAll(config.GeneratedDir, 0755)
+	defer os.RemoveAll(config.GeneratedDir)
 
 	service := NewService(&config)
 
@@ -144,7 +144,7 @@ func TestGetImage(t *testing.T) {
 		receiptId := "test-get-image"
 		size := "small"
 		fileName := receiptId + "_" + size + ".jpg"
-		fPath := filepath.Join(config.DIR_IMAGES, fileName)
+		fPath := filepath.Join(config.GeneratedDir, fileName)
 
 		createImgErr := test_utils.CreateTestImage(fPath, 100, 100)
 		assert.Nil(t, createImgErr)
@@ -160,7 +160,7 @@ func TestGetImage(t *testing.T) {
 		receiptId := "test-get-image"
 		size := "large"
 		fileName := receiptId + "_" + size + ".jpg"
-		fPath := filepath.Join(config.DIR_IMAGES, fileName)
+		fPath := filepath.Join(config.GeneratedDir, fileName)
 
 		createImgErr := test_utils.CreateTestImage(fPath, 100, 100)
 		assert.Nil(t, createImgErr)

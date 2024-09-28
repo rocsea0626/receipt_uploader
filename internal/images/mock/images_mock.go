@@ -18,7 +18,7 @@ func (s *ServiceMock) DecodeImage(r *http.Request) ([]byte, error) {
 
 func (s *ServiceMock) GenerateImages(srcPath string) error {
 	log.Printf("images_mock.GenerateImages(srcPath: %s)", srcPath)
-	if s.Config.DIR_IMAGES == "mock_generate_images_failed" {
+	if s.Config.GeneratedDir == "mock_generate_images_failed" {
 		return errors.New("mock GenerateImages() failed")
 	}
 	return nil

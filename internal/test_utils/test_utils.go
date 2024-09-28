@@ -65,18 +65,18 @@ func GenerateUploadRequest(t *testing.T, url string, fileName string) (*http.Req
 }
 
 func InitTestServer(config *configs.Config) error {
-	tmpErr := os.MkdirAll(config.DIR_TMP, 0755)
+	tmpErr := os.MkdirAll(config.UploadedDir, 0755)
 	if tmpErr != nil {
 		err := fmt.Errorf("os.Mkdir() failed, err: %s", tmpErr.Error())
 		return err
 	}
-	log.Printf("folder %s has been created", config.DIR_TMP)
+	log.Printf("folder %s has been created", config.UploadedDir)
 
-	imagesErr := os.MkdirAll(config.DIR_IMAGES, 0755)
+	imagesErr := os.MkdirAll(config.GeneratedDir, 0755)
 	if imagesErr != nil {
 		err := fmt.Errorf("os.Mkdir() failed, err: %s", imagesErr.Error())
 		return err
 	}
-	log.Printf("folder %s has been created", config.DIR_IMAGES)
+	log.Printf("folder %s has been created", config.GeneratedDir)
 	return nil
 }
