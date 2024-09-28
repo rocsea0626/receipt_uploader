@@ -28,6 +28,7 @@ func UploadReceiptHandler(config *configs.Config, imagesService images.ServiceTy
 
 func handlePost(w http.ResponseWriter, r *http.Request, imagesService images.ServiceType) {
 	log.Println("handlePost()")
+	// username := r.Header.Get("username_token")
 
 	bytes, decodeErr := imagesService.DecodeImage(r)
 	if decodeErr != nil {

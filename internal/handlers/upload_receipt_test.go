@@ -19,6 +19,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		UploadedDir:  "./mock-tmp",
 		GeneratedDir: "./mock-images",
 	}
+	userToken := ""
 
 	test_utils.InitTestServer(&config)
 	defer os.RemoveAll(config.UploadedDir)
@@ -33,7 +34,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, createErr)
 		defer os.Remove(fileName)
 
-		req, reqErr := test_utils.GenerateUploadRequest(t, "/receipts", fileName)
+		req, reqErr := test_utils.GenerateUploadRequest(t, "/receipts", fileName, userToken)
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
@@ -52,7 +53,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, createErr)
 		defer os.Remove(fileName)
 
-		req, reqErr := test_utils.GenerateUploadRequest(t, "/receipts", fileName)
+		req, reqErr := test_utils.GenerateUploadRequest(t, "/receipts", fileName, userToken)
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()

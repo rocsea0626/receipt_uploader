@@ -120,6 +120,7 @@ Response:
 ## Testing
 - unit test
 - integration test
+- stress test
 ## Project structure
 
 ## System security

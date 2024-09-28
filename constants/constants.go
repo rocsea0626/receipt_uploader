@@ -6,6 +6,7 @@ const (
 	MAX_UPLOAD_SIZE   = int64(10 * 1024 * 1024) // Maximum 10 MB
 	HTTP_ERR_MSG_500  = "internal server error"
 	HTTP_ERR_MSG_400  = "invalid image"
+	HTTP_ERR_MSG_403  = "access forbidden"
 	HTTP_ERR_MSG_404  = "image not found"
 	HTTP_ERR_MSG_405  = "method not allowed"
 	IMAGE_SIZE_MIN_W  = 600

@@ -11,6 +11,7 @@ import (
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/handlers"
 	"receipt_uploader/internal/images"
+	"receipt_uploader/internal/middlewares"
 	"receipt_uploader/internal/models/configs"
 	"strings"
 
@@ -118,8 +119,10 @@ func StartServer(config *configs.Config) {
 	imagesService := images.NewService(config)
 
 	http.HandleFunc("/health", handlers.HealthHandler())
-	http.HandleFunc("/receipts", handlers.UploadReceiptHandler(config, imagesService))
-	http.HandleFunc("/receipts/{receiptId}", handlers.DownloadReceiptHandler(config, imagesService))
+	// http.HandleFunc("/receipts", handlers.UploadReceiptHandler(config, imagesService))
+	http.Handle("/receipts", middlewares.Authenticator(http.HandlerFunc(handlers.UploadReceiptHandler(config, imagesService))))
+	// http.HandleFunc("/receipts/{receiptId}", handlers.DownloadReceiptHandler(config, imagesService))
+	http.Handle("/receipts/{receiptId}", middlewares.Authenticator(http.HandlerFunc(handlers.DownloadReceiptHandler(config, imagesService))))
 
 	fmt.Printf("Starting server on %s", constants.PORT)
 	if err := http.ListenAndServe(constants.PORT, nil); err != nil {

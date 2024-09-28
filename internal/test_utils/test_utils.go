@@ -32,8 +32,7 @@ func CreateTestImage(filePath string, width, height int) error {
 	return jpeg.Encode(out, img, nil)
 }
 
-// GenerateUploadRequest prepares and uploads a test image to a specified URL
-func GenerateUploadRequest(t *testing.T, url string, fileName string) (*http.Request, error) {
+func GenerateUploadRequest(t *testing.T, url string, fileName, userToken string) (*http.Request, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -60,6 +59,7 @@ func GenerateUploadRequest(t *testing.T, url string, fileName string) (*http.Req
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("username_token", userToken)
 
 	return req, nil
 }

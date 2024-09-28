@@ -10,6 +10,8 @@ import (
 )
 
 func TestSaveUploadImage(t *testing.T) {
+	userToken := ""
+
 	t.Run("succeed", func(t *testing.T) {
 		fileName := "test_image_save_upload.jpg"
 		tmpDir := "tmp"
@@ -21,7 +23,7 @@ func TestSaveUploadImage(t *testing.T) {
 		assert.Nil(t, createErr)
 		defer os.Remove(fileName)
 
-		req, reqErr := test_utils.GenerateUploadRequest(t, "/upload", fileName)
+		req, reqErr := test_utils.GenerateUploadRequest(t, "/upload", fileName, userToken)
 		assert.Nil(t, reqErr)
 
 		tmpPath, err := SaveUploadedImage(req, tmpDir)
@@ -31,7 +33,6 @@ func TestSaveUploadImage(t *testing.T) {
 	})
 
 	t.Run("should fail, invalid image width, w=500, h=1000", func(t *testing.T) {
-		t.Skip()
 		fileName := "test_image_save_upload.jpg"
 		tmpDir := "tmp"
 		err := os.Mkdir(tmpDir, 0755)
@@ -42,7 +43,7 @@ func TestSaveUploadImage(t *testing.T) {
 		assert.Nil(t, createErr)
 		defer os.Remove(fileName)
 
-		req, reqErr := test_utils.GenerateUploadRequest(t, "/upload", fileName)
+		req, reqErr := test_utils.GenerateUploadRequest(t, "/upload", fileName, userToken)
 		assert.Nil(t, reqErr)
 
 		tmpPath, err := SaveUploadedImage(req, tmpDir)
@@ -51,8 +52,6 @@ func TestSaveUploadImage(t *testing.T) {
 	})
 
 	t.Run("should fail, invalid image height, w=600, h=500", func(t *testing.T) {
-		t.Skip()
-
 		fileName := "test_image_save_upload.jpg"
 		tmpDir := "tmp"
 		err := os.Mkdir(tmpDir, 0755)
@@ -63,7 +62,7 @@ func TestSaveUploadImage(t *testing.T) {
 		assert.Nil(t, createErr)
 		defer os.Remove(fileName)
 
-		req, reqErr := test_utils.GenerateUploadRequest(t, "/upload", fileName)
+		req, reqErr := test_utils.GenerateUploadRequest(t, "/upload", fileName, userToken)
 		assert.Nil(t, reqErr)
 
 		tmpPath, err := SaveUploadedImage(req, tmpDir)

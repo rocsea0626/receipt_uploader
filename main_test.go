@@ -42,10 +42,11 @@ func TestMain(t *testing.T) {
 
 	t.Run("return 201, POST /receipts", func(t *testing.T) {
 		uploadFilePath := "./integ-test.jpg"
+		userToken := "valid_user"
 
 		test_utils.CreateTestImage(uploadFilePath, 1000, 1200)
 		defer os.Remove(uploadFilePath)
-		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath)
+		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath, userToken)
 		assert.Nil(t, reqErr)
 
 		resp, err := client.Do(req)
@@ -61,10 +62,11 @@ func TestMain(t *testing.T) {
 
 	t.Run("return 400, POST /receipts, empty image", func(t *testing.T) {
 		uploadFilePath := "./integ-test.jpg"
+		userToken := "valid_user"
 
 		test_utils.CreateTestImage(uploadFilePath, 0, 0)
 		defer os.Remove(uploadFilePath)
-		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath)
+		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath, userToken)
 		assert.Nil(t, reqErr)
 
 		resp, err := client.Do(req)
@@ -77,13 +79,30 @@ func TestMain(t *testing.T) {
 		assert.Equal(t, constants.HTTP_ERR_MSG_400, errorResp.Error)
 	})
 
-	t.Run("return 200, GET /receipts/{receiptId}?size=large", func(t *testing.T) {
+	t.Run("return 403, username_token missing", func(t *testing.T) {
 		uploadFilePath := "./integ-test.jpg"
-		size := "large"
+		userToken := ""
 
 		test_utils.CreateTestImage(uploadFilePath, 1000, 1200)
 		defer os.Remove(uploadFilePath)
-		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath)
+		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath, userToken)
+		assert.Nil(t, reqErr)
+
+		resp, err := client.Do(req)
+		assert.Nil(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("return 200, GET /receipts/{receiptId}?size=large", func(t *testing.T) {
+		uploadFilePath := "./integ-test.jpg"
+		size := "large"
+		userToken := "valid_user"
+
+		test_utils.CreateTestImage(uploadFilePath, 1000, 1200)
+		defer os.Remove(uploadFilePath)
+		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath, userToken)
 		assert.Nil(t, reqErr)
 
 		orgFileSize, sizeErr := test_utils.GetFileSize(uploadFilePath)
@@ -102,6 +121,7 @@ func TestMain(t *testing.T) {
 		getUrl := fmt.Sprintf("%s/%s?size=%s", url, uploadResp.ReceiptID, size)
 		log.Println("getUrl: ", getUrl)
 		getReq, getReqErr := http.NewRequest(http.MethodGet, getUrl, nil)
+		getReq.Header.Set("username_token", userToken)
 		assert.Nil(t, getReqErr)
 
 		getResp, getErr := client.Do(getReq)
@@ -120,5 +140,35 @@ func TestMain(t *testing.T) {
 		assert.Nil(t, getReadErr)
 		assert.Equal(t, orgFileSize, int64(len(getRespBody)))
 		assert.Equal(t, header.ContentLength, int64(len(getRespBody)))
+	})
+
+	t.Run("return 403, GET /receipts/{receiptId}?size=large, username_token missing", func(t *testing.T) {
+
+		getUrl := fmt.Sprintf("%s/%s?size=%s", url, "fakereceiptId", "small")
+		log.Println("getUrl: ", getUrl)
+		getReq, getReqErr := http.NewRequest(http.MethodGet, getUrl, nil)
+		assert.Nil(t, getReqErr)
+
+		getResp, getErr := client.Do(getReq)
+		assert.Nil(t, getErr)
+		defer getResp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, getResp.StatusCode)
+	})
+
+	t.Run("return 403, GET /receipts/{receiptId}?size=large, token has wrong key", func(t *testing.T) {
+
+		getUrl := fmt.Sprintf("%s/%s?size=%s", url, "fakereceiptId", "small")
+		log.Println("getUrl: ", getUrl)
+		getReq, getReqErr := http.NewRequest(http.MethodGet, getUrl, nil)
+		getReq.Header.Set("wrong_token_key", "username_token_val")
+
+		assert.Nil(t, getReqErr)
+
+		getResp, getErr := client.Do(getReq)
+		assert.Nil(t, getErr)
+		defer getResp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, getResp.StatusCode)
 	})
 }
