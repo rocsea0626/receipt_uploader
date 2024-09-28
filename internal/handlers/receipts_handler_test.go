@@ -113,7 +113,7 @@ func TestReceiptsGetHandler(t *testing.T) {
 
 	imagesService := images.NewService(&config)
 	t.Run("return 200, size=small", func(t *testing.T) {
-		receiptId := "test-get-image"
+		receiptId := "testgetimage"
 		size := "small"
 		fileName := receiptId + "_" + size + ".jpg"
 		fPath := filepath.Join(config.DIR_IMAGES, fileName)
@@ -134,4 +134,5 @@ func TestReceiptsGetHandler(t *testing.T) {
 		status := rr.Code
 		assert.Equal(t, http.StatusOK, status)
 	})
+
 }

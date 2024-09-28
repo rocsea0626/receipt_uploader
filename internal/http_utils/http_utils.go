@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/models/http_responses"
+	"regexp"
 	"strings"
 )
 
@@ -48,10 +50,18 @@ func SendImageDownloadResponse(w http.ResponseWriter, fileName string, fileBytes
 }
 
 func ValidateGetImageRequest(r *http.Request) (string, string, error) {
+	log.Println("r.URL.Path: ", r.URL.Path)
+
 	receiptID := strings.TrimPrefix(r.URL.Path, "/receipts/")
+	log.Println("receiptID: ", receiptID)
+
+	re := regexp.MustCompile(`^[a-z0-9]+$`)
+	if !re.MatchString(receiptID) {
+		return "", "", fmt.Errorf("invalid receiptId")
+	}
 
 	size := r.URL.Query().Get("size")
-	if size != "small" && size != "medium" && size != "large" {
+	if size != constants.IMAGE_SIZE_SMALL && size != constants.IMAGE_SIZE_MEDIUM && size != constants.IMAGE_SIZE_LARGE {
 		return "", "", fmt.Errorf("invalid size parameter, size: %s", size)
 	}
 

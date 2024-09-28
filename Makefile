@@ -1,6 +1,6 @@
 .PHONY: build build-dev test test-verbose submit
 
-UNIT_TEST=go test -coverpkg=./... -coverprofile=coverage.out ./internal/utils/... ./internal/images/... ./internal/futils/... ./internal/handlers/...
+UNIT_TEST=go test -coverpkg=./... -coverprofile=coverage.out ./internal/utils/... ./internal/http_utils/... ./internal/images/... ./internal/futils/... ./internal/handlers/...
 INTEG_TEST=go test ./
 VERBOSE=-v
 

@@ -13,6 +13,7 @@ import (
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/futils"
 	"receipt_uploader/internal/models/configs"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/nfnt/resize"
@@ -70,8 +71,7 @@ func (s *Service) GenerateImages(srcPath string) error {
 }
 
 func (s *Service) DecodeImage(r *http.Request) ([]byte, error) {
-
-	parseErr := r.ParseMultipartForm(10 << 20) // Maximum 10 MB
+	parseErr := r.ParseMultipartForm(constants.MAX_UPLOAD_SIZE)
 	if parseErr != nil {
 		return nil, fmt.Errorf("r.ParseMultipartForm() failed, err: %s", parseErr.Error())
 	}
@@ -106,7 +106,7 @@ func (s *Service) DecodeImage(r *http.Request) ([]byte, error) {
 func (s *Service) SaveUpload(bytes []byte) (string, error) {
 	log.Printf("SaveUpload()")
 
-	fileName := uuid.New().String() + ".jpg"
+	fileName := strings.ReplaceAll(uuid.New().String()+".jpg", "-", "")
 	destPath := filepath.Join(s.Config.DIR_TMP, fileName)
 
 	saveImage(&bytes, destPath)

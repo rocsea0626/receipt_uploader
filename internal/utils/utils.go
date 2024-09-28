@@ -12,6 +12,7 @@ import (
 	"receipt_uploader/internal/handlers"
 	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/models/configs"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -64,6 +65,17 @@ func SaveUploadedImage(r *http.Request, tmpDir string) (string, error) {
 	log.Printf("written: %d", written)
 
 	return tmpPath, nil
+}
+
+func ValidateGetImageRequest(r *http.Request) (string, string, error) {
+	receiptID := strings.TrimPrefix(r.URL.Path, "/receipts/")
+
+	size := r.URL.Query().Get("size")
+	if size != constants.IMAGE_SIZE_SMALL && size != constants.IMAGE_SIZE_MEDIUM && size != constants.IMAGE_SIZE_LARGE {
+		return "", "", fmt.Errorf("invalid size parameter, size: %s", size)
+	}
+
+	return receiptID, size, nil
 }
 
 func LoadConfig() (*configs.Config, error) {
