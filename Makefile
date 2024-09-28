@@ -1,14 +1,23 @@
-.PHONY: build build-dev test test-verbose submit
+.PHONY: start start-dev dev build build-dev test test-verbose submit
 
 UNIT_TEST=go test -coverpkg=./... -coverprofile=coverage.out ./internal/utils/... ./internal/http_utils/... ./internal/images/... ./internal/futils/... ./internal/handlers/...
 INTEG_TEST=go test ./
 VERBOSE=-v
 
+start:
+	go run ./main.go
+
+start-dev:
+	go run ./main.go
+
+dev:
+	go run ./main.go
+
 build:
-	go build -o bin/poker ./main.go
+	go build -o bin/server ./main.go
 
 build-dev:
-	go build -o bin/poker -ldflags "-X main.mode=dev" ./main.go
+	go build -o bin/server -ldflags "-X main.mode=dev" ./main.go
 
 unit-test:
 	$(UNIT_TEST)
@@ -37,8 +46,8 @@ test-verbose:
 	make integ-test-verbose
 
 clean:
-	- rm -rf bin
+	- rm -rf images/*
 
 submit:
 	@echo "packing project for submission..."
-	- zip -r submit-larvis-poker.zip . -x '.git/*' coverage.out *.zip bin/* test_data_org.csv
+	- zip -r receipt_uploader.zip . -x '.git/*' coverage.out *.zip bin/*

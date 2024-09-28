@@ -11,3 +11,9 @@ type HealthResponse struct {
 type UploadResponse struct {
 	ReceiptID string `json:"receiptId"`
 }
+
+type DownloadResponseHeader struct {
+	Filename      string `json:"fileName"`
+	ContentType   string `json:"contentType"`
+	ContentLength int64  `json:"contentLength"`
+}

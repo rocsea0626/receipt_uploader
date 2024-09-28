@@ -16,6 +16,8 @@ import (
 
 func ReceiptsHandler(config *configs.Config, imagesService images.ServiceType) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("r.Method: ", r.Method)
+
 		switch r.Method {
 		case http.MethodGet:
 			handleGet(w, r, imagesService)
@@ -31,6 +33,8 @@ func ReceiptsHandler(config *configs.Config, imagesService images.ServiceType) h
 }
 
 func handlePost(w http.ResponseWriter, r *http.Request, imagesService images.ServiceType) {
+	log.Println("handlePost()")
+
 	bytes, decodeErr := imagesService.DecodeImage(r)
 	if decodeErr != nil {
 		log.Printf("http_utils.DecodeImage() failed, err: %s", decodeErr.Error())
@@ -38,6 +42,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, imagesService images.Ser
 			Error: constants.HTTP_ERR_MSG_400,
 		}
 		http_utils.SendErrorResponse(w, &resp, http.StatusBadRequest)
+		return
 	}
 
 	tmpFilePath, saveErr := imagesService.SaveUpload(bytes)
