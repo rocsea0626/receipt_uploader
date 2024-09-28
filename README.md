@@ -43,7 +43,7 @@ All images are stored under `images` folder.
   - Maximum size of upload is 10MB and minimum resolution is 600x800. System rejects any image failed such requirements
   - Only `.jpg` file is supported for the sake of simplicity
 
-- # User Token Validation
+- User Token Validation
 Each user token can only contain lowercase letters, digits, and underscores. Validation rules for the `user_token` are listed below:
 
 | Validation Check           | Value              | Description                                           |
@@ -59,11 +59,9 @@ Each user token can only contain lowercase letters, digits, and underscores. Val
 | **Edge Cases**             |                    |                                                       |
 
 
-## Image storage:
+## Access control:
 - Images of the same receipt are stored within a folder named by username, each image if suffixed by either small, medium, large (original size)
 - System checks dulicate uploads of the same receipt by checking the name of uploaded image from client
-
-
 
 ## API endpoints:
 

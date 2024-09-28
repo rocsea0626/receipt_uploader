@@ -11,6 +11,7 @@ import (
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/handlers"
 	"receipt_uploader/internal/images"
+	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/middlewares"
 	"receipt_uploader/internal/models/configs"
 	"strings"
@@ -102,17 +103,17 @@ func LoadConfig() (*configs.Config, error) {
 func StartServer(config *configs.Config) {
 	log.Println("starting server...")
 
-	fmt.Printf("creating dir: %s to store uploaded receipts\n", config.UploadedDir)
+	logging.Printf("creating dir: %s to store uploaded receipts\n", config.UploadedDir)
 	tmpErr := os.MkdirAll(config.UploadedDir, 0755)
 	if tmpErr != nil {
-		fmt.Printf("failed to start server, err: %s", tmpErr.Error())
+		logging.Printf("failed to start server, err: %s", tmpErr.Error())
 		return
 	}
 
-	fmt.Printf("creating dir: %s to store generated images of receipts\n", config.GeneratedDir)
+	logging.Printf("creating dir: %s to store generated images of receipts\n", config.GeneratedDir)
 	imagesErr := os.MkdirAll(config.GeneratedDir, 0755)
 	if imagesErr != nil {
-		fmt.Printf("failed to start server, err: %s", imagesErr.Error())
+		logging.Printf("failed to start server, err: %s", imagesErr.Error())
 		return
 	}
 
@@ -126,8 +127,8 @@ func StartServer(config *configs.Config) {
 		middlewares.Auth(http.HandlerFunc(handlers.DownloadReceipt(config, imagesService))),
 	)
 
-	fmt.Printf("Starting server on %s", constants.PORT)
+	logging.Printf("Starting server on %s", constants.PORT)
 	if err := http.ListenAndServe(constants.PORT, nil); err != nil {
-		fmt.Println("Error starting server:", err)
+		logging.Println("Error starting server:", err)
 	}
 }
