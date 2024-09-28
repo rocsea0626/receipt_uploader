@@ -26,7 +26,7 @@ func TestDownloadReceiptHandler(t *testing.T) {
 	defer os.RemoveAll(config.UploadedDir)
 	defer os.RemoveAll(config.GeneratedDir)
 
-	imagesService := images.NewService(&config)
+	imagesService := images.NewService()
 	t.Run("return 200, size=small", func(t *testing.T) {
 		receiptId := "testgetimage"
 		size := "small"

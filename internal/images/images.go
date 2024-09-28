@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/futils"
-	"receipt_uploader/internal/models/configs"
 	"strings"
 
 	"github.com/google/uuid"
@@ -20,18 +19,14 @@ import (
 )
 
 type Service struct {
-	Config *configs.Config
 }
 
-func NewService(config *configs.Config) ServiceType {
-	return &Service{
-		Config: config,
-	}
+func NewService() ServiceType {
+	return &Service{}
 }
 
-func (s *Service) GenerateImages(srcPath string) error {
-	log.Printf("GenerateImages(srcPath: %s)", srcPath)
-	destDir := s.Config.GeneratedDir
+func (s *Service) GenerateImages(srcPath, destDir string) error {
+	log.Printf("GenerateImages(srcPath: %s, destDir: %s)", srcPath, destDir)
 
 	smallImg, resizeSmallErr := resizeImage(srcPath, constants.IMAGE_SIZE_W_S, constants.IMAGE_SIZE_H_S)
 	if resizeSmallErr != nil {
@@ -102,22 +97,22 @@ func (s *Service) DecodeImage(r *http.Request) ([]byte, error) {
 	return fileBytes, nil
 }
 
-func (s *Service) SaveUpload(bytes []byte) (string, error) {
-	log.Printf("SaveUpload()")
+func (s *Service) SaveUpload(bytes []byte, destDir string) (string, error) {
+	log.Printf("SaveUpload(len(bytes): %d, destDir: %s)", len(bytes), destDir)
 
 	fileName := strings.ReplaceAll(uuid.New().String()+".jpg", "-", "")
-	destPath := filepath.Join(s.Config.UploadedDir, fileName)
+	destPath := filepath.Join(destDir, fileName)
 
 	saveImage(&bytes, destPath)
 
 	return destPath, nil
 }
 
-func (s *Service) GetImage(receiptId, size string) ([]byte, string, error) {
-	log.Printf("GetImage(receiptId: %s, size: %s)", receiptId, size)
+func (s *Service) GetImage(receiptId, size, srcDir string) ([]byte, string, error) {
+	log.Printf("GetImage(receiptId: %s, size: %s, srcDir: %s)", receiptId, size, srcDir)
 
 	fName := fmt.Sprintf("%s_%s.jpg", receiptId, size)
-	fPath := fmt.Sprintf("%s/%s", s.Config.GeneratedDir, fName)
+	fPath := fmt.Sprintf("%s/%s", srcDir, fName)
 	log.Printf("fPath: %s", fPath)
 
 	fileBytes, readErr := os.ReadFile(fPath)
@@ -131,6 +126,8 @@ func (s *Service) GetImage(receiptId, size string) ([]byte, string, error) {
 }
 
 func resizeImage(srcPath string, width, height int) ([]byte, error) {
+	log.Printf("resizeImage(srcPath: %s, width: %d, height: %d)", srcPath, width, height)
+
 	file, err := os.Open(srcPath)
 	if err != nil {
 		return nil, fmt.Errorf("os.Open() failed: %v", err)
@@ -153,7 +150,7 @@ func resizeImage(srcPath string, width, height int) ([]byte, error) {
 }
 
 func saveImage(bytes *[]byte, destPath string) error {
-	log.Printf("saveImage(destPath: %s)", destPath)
+	log.Printf("saveImage(len(bytes): %d, destPath: %s)", len(*bytes), destPath)
 
 	destFile, createErr := os.Create(destPath)
 	if createErr != nil {

@@ -22,11 +22,11 @@ func DownloadReceiptHandler(config *configs.Config, imagesService images.Service
 			return
 		}
 
-		handleGet(w, r, imagesService)
+		handleGet(w, r, config, imagesService)
 	}
 }
 
-func handleGet(w http.ResponseWriter, r *http.Request, imagesService images.ServiceType) {
+func handleGet(w http.ResponseWriter, r *http.Request, config *configs.Config, imagesService images.ServiceType) {
 	log.Printf("handleGet(), path: %s", r.URL.Path)
 
 	receiptId, size, validateErr := http_utils.ValidateGetImageRequest(r)
@@ -39,7 +39,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, imagesService images.Serv
 		return
 	}
 
-	fileBytes, fileName, getErr := imagesService.GetImage(receiptId, size)
+	fileBytes, fileName, getErr := imagesService.GetImage(receiptId, size, config.GeneratedDir)
 	if getErr != nil {
 		log.Printf("images.GetImage() failed, err: %s", getErr.Error())
 		if os.IsNotExist(getErr) {

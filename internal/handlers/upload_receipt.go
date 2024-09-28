@@ -22,11 +22,11 @@ func UploadReceiptHandler(config *configs.Config, imagesService images.ServiceTy
 			return
 		}
 
-		handlePost(w, r, imagesService)
+		handlePost(w, r, config, imagesService)
 	}
 }
 
-func handlePost(w http.ResponseWriter, r *http.Request, imagesService images.ServiceType) {
+func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, imagesService images.ServiceType) {
 	log.Println("handlePost()")
 	// username := r.Header.Get("username_token")
 
@@ -40,7 +40,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, imagesService images.Ser
 		return
 	}
 
-	tmpFilePath, saveErr := imagesService.SaveUpload(bytes)
+	tmpFilePath, saveErr := imagesService.SaveUpload(bytes, config.UploadedDir)
 	if saveErr != nil {
 		log.Printf("utils.SaveUpload() failed, err: %s", saveErr.Error())
 		resp := http_responses.ErrorResponse{
@@ -50,7 +50,8 @@ func handlePost(w http.ResponseWriter, r *http.Request, imagesService images.Ser
 		return
 	}
 
-	genErr := imagesService.GenerateImages(tmpFilePath)
+	destDir := config.GeneratedDir
+	genErr := imagesService.GenerateImages(tmpFilePath, destDir)
 	if genErr != nil {
 		log.Printf("images.GenerateImages() failed, err: %s", genErr.Error())
 		resp := http_responses.ErrorResponse{

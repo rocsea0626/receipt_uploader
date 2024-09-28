@@ -116,7 +116,7 @@ func StartServer(config *configs.Config) {
 		return
 	}
 
-	imagesService := images.NewService(config)
+	imagesService := images.NewService()
 
 	http.HandleFunc("/health", handlers.HealthHandler())
 	// http.HandleFunc("/receipts", handlers.UploadReceiptHandler(config, imagesService))

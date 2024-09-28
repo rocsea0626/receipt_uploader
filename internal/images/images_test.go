@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"receipt_uploader/internal/futils"
-	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/test_utils"
 	"testing"
 
@@ -19,17 +18,13 @@ func TestGenerateImages(t *testing.T) {
 	os.MkdirAll(outputDir, 0755)
 	defer os.RemoveAll(outputDir)
 
-	config := configs.Config{
-		GeneratedDir: outputDir,
-	}
-
-	service := NewService(&config)
+	service := NewService()
 
 	t.Run("succeed", func(t *testing.T) {
 		createErr := test_utils.CreateTestImage(inputPath, 800, 1200)
 		assert.Nil(t, createErr)
 
-		genErr := service.GenerateImages(inputPath)
+		genErr := service.GenerateImages(inputPath, outputDir)
 		assert.Nil(t, genErr)
 
 		smallImagePath := futils.GetOutputPath(inputPath, outputDir, "small")
@@ -132,24 +127,22 @@ func TestSaveImage(t *testing.T) {
 }
 
 func TestGetImage(t *testing.T) {
-	config := configs.Config{
-		GeneratedDir: "./mock-get-images/",
-	}
-	os.MkdirAll(config.GeneratedDir, 0755)
-	defer os.RemoveAll(config.GeneratedDir)
+	srcDir := "./mock-get-images/"
+	os.MkdirAll(srcDir, 0755)
+	defer os.RemoveAll(srcDir)
 
-	service := NewService(&config)
+	service := NewService()
 
 	t.Run("succeed, size=small", func(t *testing.T) {
 		receiptId := "test-get-image"
 		size := "small"
 		fileName := receiptId + "_" + size + ".jpg"
-		fPath := filepath.Join(config.GeneratedDir, fileName)
+		fPath := filepath.Join(srcDir, fileName)
 
 		createImgErr := test_utils.CreateTestImage(fPath, 100, 100)
 		assert.Nil(t, createImgErr)
 
-		fileBytes, fName, getErr := service.GetImage(receiptId, size)
+		fileBytes, fName, getErr := service.GetImage(receiptId, size, srcDir)
 		assert.Nil(t, getErr)
 		assert.Greater(t, len(fileBytes), 0)
 		assert.Equal(t, fileName, fName)
@@ -160,12 +153,12 @@ func TestGetImage(t *testing.T) {
 		receiptId := "test-get-image"
 		size := "large"
 		fileName := receiptId + "_" + size + ".jpg"
-		fPath := filepath.Join(config.GeneratedDir, fileName)
+		fPath := filepath.Join(srcDir, fileName)
 
 		createImgErr := test_utils.CreateTestImage(fPath, 100, 100)
 		assert.Nil(t, createImgErr)
 
-		fileBytes, fName, getErr := service.GetImage(receiptId, size)
+		fileBytes, fName, getErr := service.GetImage(receiptId, size, srcDir)
 		assert.Nil(t, getErr)
 		assert.Greater(t, len(fileBytes), 0)
 		assert.Equal(t, fileName, fName)
@@ -176,7 +169,7 @@ func TestGetImage(t *testing.T) {
 		receiptId := "test-get-image-non-existing"
 		size := "large"
 
-		fileBytes, fName, getErr := service.GetImage(receiptId, size)
+		fileBytes, fName, getErr := service.GetImage(receiptId, size, srcDir)
 		assert.NotNil(t, getErr)
 		assert.ErrorIs(t, getErr, os.ErrNotExist)
 		assert.Nil(t, fileBytes)

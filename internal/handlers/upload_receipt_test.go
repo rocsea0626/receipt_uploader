@@ -25,7 +25,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 	defer os.RemoveAll(config.UploadedDir)
 	defer os.RemoveAll(config.GeneratedDir)
 
-	imagesService := images.NewService(&config)
+	imagesService := images.NewService()
 
 	t.Run("succeed, POST, 1200x1200 image", func(t *testing.T) {
 		fileName := "test_image_save_upload.jpg"
