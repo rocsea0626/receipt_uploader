@@ -38,7 +38,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceiptHandler(&config, imagesService)
+		handler := UploadReceipt(&config, imagesService)
 
 		handler.ServeHTTP(rr, req)
 
@@ -57,7 +57,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceiptHandler(&config, imagesService)
+		handler := UploadReceipt(&config, imagesService)
 
 		handler.ServeHTTP(rr, req)
 
@@ -77,7 +77,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceiptHandler(&mockConfig, &mockImagesService)
+		handler := UploadReceipt(&mockConfig, &mockImagesService)
 
 		handler.ServeHTTP(rr, req)
 
@@ -92,7 +92,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceiptHandler(&config, imagesService)
+		handler := UploadReceipt(&config, imagesService)
 
 		handler.ServeHTTP(rr, req)
 

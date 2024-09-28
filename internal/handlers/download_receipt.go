@@ -11,7 +11,7 @@ import (
 	"receipt_uploader/internal/models/http_responses"
 )
 
-func DownloadReceiptHandler(config *configs.Config, imagesService images.ServiceType) http.HandlerFunc {
+func DownloadReceipt(config *configs.Config, imagesService images.ServiceType) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("r.Method: ", r.Method)
 		if http.MethodGet != r.Method {

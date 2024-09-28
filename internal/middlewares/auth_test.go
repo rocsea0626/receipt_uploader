@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAuthenticator(t *testing.T) {
+func TestAuth(t *testing.T) {
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	auth := Authenticator(testHandler)
+	auth := Auth(testHandler)
 
 	t.Run("succeed, token=user_123", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/some-endpoint", nil)

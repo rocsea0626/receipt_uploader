@@ -42,7 +42,7 @@ func TestDownloadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := DownloadReceiptHandler(&config, imagesService)
+		handler := DownloadReceipt(&config, imagesService)
 
 		handler.ServeHTTP(rr, req)
 
@@ -59,7 +59,7 @@ func TestDownloadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := DownloadReceiptHandler(&config, imagesService)
+		handler := DownloadReceipt(&config, imagesService)
 
 		handler.ServeHTTP(rr, req)
 
@@ -76,7 +76,7 @@ func TestDownloadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := DownloadReceiptHandler(&config, imagesService)
+		handler := DownloadReceipt(&config, imagesService)
 
 		handler.ServeHTTP(rr, req)
 
@@ -93,7 +93,7 @@ func TestDownloadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := DownloadReceiptHandler(&config, imagesService)
+		handler := DownloadReceipt(&config, imagesService)
 
 		handler.ServeHTTP(rr, req)
 
@@ -117,7 +117,7 @@ func TestDownloadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := DownloadReceiptHandler(&mockConfig, &mockImagesService)
+		handler := DownloadReceipt(&mockConfig, &mockImagesService)
 
 		handler.ServeHTTP(rr, req)
 

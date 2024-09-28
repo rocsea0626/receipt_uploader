@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func Authenticator(next http.Handler) http.Handler {
+func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		usernameToken := r.Header.Get("username_token")
 
