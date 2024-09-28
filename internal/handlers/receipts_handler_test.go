@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -67,16 +68,17 @@ func TestReceiptsPostHandler(t *testing.T) {
 	})
 
 	t.Run("should fail, GenerateImages() failed", func(t *testing.T) {
-		req, reqErr := http.NewRequest(http.MethodPost, "/receipts", nil)
-		assert.Nil(t, reqErr)
-
-		rr := httptest.NewRecorder()
 		mockConfig := configs.Config{
 			DIR_IMAGES: "mock_generate_images_failed",
 		}
 		mockImagesService := images_mock.ServiceMock{
 			Config: &mockConfig,
 		}
+
+		req, reqErr := http.NewRequest(http.MethodPost, "/receipts", nil)
+		assert.Nil(t, reqErr)
+
+		rr := httptest.NewRecorder()
 		handler := ReceiptsHandler(&mockConfig, &mockImagesService)
 
 		handler.ServeHTTP(rr, req)
@@ -135,4 +137,78 @@ func TestReceiptsGetHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, status)
 	})
 
+	t.Run("return 404, not found by receiptId", func(t *testing.T) {
+		receiptId := "notfound"
+		size := "medium"
+
+		url := fmt.Sprintf("/receipts/%s?size=%s", receiptId, size)
+		req, reqErr := http.NewRequest(http.MethodGet, url, nil)
+		assert.Nil(t, reqErr)
+
+		rr := httptest.NewRecorder()
+		handler := ReceiptsHandler(&config, imagesService)
+
+		handler.ServeHTTP(rr, req)
+
+		status := rr.Code
+		assert.Equal(t, http.StatusNotFound, status)
+	})
+
+	t.Run("return 400, invalid receiptId, receiptId=12.34", func(t *testing.T) {
+		receiptId := "12.34"
+		size := "larage"
+
+		url := fmt.Sprintf("/receipts/%s?size=%s", receiptId, size)
+		req, reqErr := http.NewRequest(http.MethodGet, url, nil)
+		assert.Nil(t, reqErr)
+
+		rr := httptest.NewRecorder()
+		handler := ReceiptsHandler(&config, imagesService)
+
+		handler.ServeHTTP(rr, req)
+
+		status := rr.Code
+		assert.Equal(t, http.StatusBadRequest, status)
+	})
+
+	t.Run("return 400, invalid szie, size=Xs", func(t *testing.T) {
+		receiptId := "1234"
+		size := "Xs"
+
+		url := fmt.Sprintf("/receipts/%s?size=%s", receiptId, size)
+		req, reqErr := http.NewRequest(http.MethodGet, url, nil)
+		assert.Nil(t, reqErr)
+
+		rr := httptest.NewRecorder()
+		handler := ReceiptsHandler(&config, imagesService)
+
+		handler.ServeHTTP(rr, req)
+
+		status := rr.Code
+		assert.Equal(t, http.StatusBadRequest, status)
+	})
+
+	t.Run("return 500, GetImage() failed", func(t *testing.T) {
+		mockConfig := configs.Config{
+			DIR_IMAGES: "mock_get_image_failed",
+		}
+		mockImagesService := images_mock.ServiceMock{
+			Config: &mockConfig,
+		}
+
+		receiptId := "mockgetimagefailed"
+		size := "medium"
+
+		url := fmt.Sprintf("/receipts/%s?size=%s", receiptId, size)
+		req, reqErr := http.NewRequest(http.MethodGet, url, nil)
+		assert.Nil(t, reqErr)
+
+		rr := httptest.NewRecorder()
+		handler := ReceiptsHandler(&mockConfig, &mockImagesService)
+
+		handler.ServeHTTP(rr, req)
+
+		status := rr.Code
+		assert.Equal(t, http.StatusInternalServerError, status)
+	})
 }

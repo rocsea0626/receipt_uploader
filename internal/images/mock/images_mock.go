@@ -30,6 +30,9 @@ func (s *ServiceMock) SaveUpload(bytes []byte) (string, error) {
 }
 
 func (s *ServiceMock) GetImage(receiptId, size string) ([]byte, string, error) {
-	log.Println("images_mock.GetImage()")
+	log.Printf("images_mock.GetImage(receiptId: %s, size: %s)", receiptId, size)
+	if receiptId == "mockgetimagefailed" {
+		return nil, "", errors.New("mock GetImage() failed")
+	}
 	return nil, "", nil
 }

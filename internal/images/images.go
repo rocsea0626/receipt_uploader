@@ -35,36 +35,35 @@ func (s *Service) GenerateImages(srcPath string) error {
 
 	smallImg, resizeSmallErr := resizeImage(srcPath, constants.IMAGE_SIZE_W_S, constants.IMAGE_SIZE_H_S)
 	if resizeSmallErr != nil {
-		err := fmt.Errorf(
+		return fmt.Errorf(
 			"ResizeImage(srcPath: %s, width: %d, height: %d) failed, err: %s",
 			srcPath, constants.IMAGE_SIZE_H_S, constants.IMAGE_SIZE_H_S, resizeSmallErr.Error(),
 		)
-		return err
 	}
 	saveSmallErr := saveImage(&smallImg, futils.GetOutputPath(srcPath, destDir, "small"))
 	if saveSmallErr != nil {
-		err := fmt.Errorf("saveImage() failed, err: %s", saveSmallErr.Error())
-		return err
+		return fmt.Errorf("saveImage() failed, err: %s", saveSmallErr.Error())
 	}
 
 	mediumImg, resizeErr2 := resizeImage(srcPath, constants.IMAGE_SIZE_W_M, constants.IMAGE_SIZE_H_M)
 	if resizeErr2 != nil {
-		err := fmt.Errorf(
+		return fmt.Errorf(
 			"ResizeImage(srcPath: %s, width: %d, height: %d) failed, err: %s",
-			srcPath, constants.IMAGE_SIZE_H_S, constants.IMAGE_SIZE_H_S, resizeErr2.Error(),
+			srcPath, constants.IMAGE_SIZE_W_M, constants.IMAGE_SIZE_H_M, resizeErr2.Error(),
 		)
-		return err
 	}
 	saveMediumErr := saveImage(&mediumImg, futils.GetOutputPath(srcPath, destDir, "medium"))
 	if saveMediumErr != nil {
-		err := fmt.Errorf("saveImage() failed, err: %s", saveMediumErr.Error())
-		return err
+		return fmt.Errorf("saveImage() failed, err: %s", saveMediumErr.Error())
 	}
 
-	saveLargeErr := futils.CopyFile(srcPath, futils.GetOutputPath(srcPath, destDir, "large"))
+	fileBytes, readErr := os.ReadFile(srcPath)
+	if readErr != nil {
+		return fmt.Errorf("saveImage() failed, err: %s", readErr.Error())
+	}
+	saveLargeErr := saveImage(&fileBytes, futils.GetOutputPath(srcPath, destDir, "large"))
 	if saveLargeErr != nil {
-		err := fmt.Errorf("futils.CopyFile() failed, err: %s", saveLargeErr.Error())
-		return err
+		return fmt.Errorf("futils.CopyFile() failed, err: %s", saveLargeErr.Error())
 	}
 
 	return nil
