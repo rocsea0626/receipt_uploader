@@ -60,8 +60,7 @@ Each user token can only contain lowercase letters, digits, and underscores. Val
 
 
 ## Access control:
-- Images of the same receipt are stored within a folder named by username, each image if suffixed by either small, medium, large (original size)
-- System checks dulicate uploads of the same receipt by checking the name of uploaded image from client
+Access control of generated images are managed by `username_token` and `receiptId`. If an user tries to download someone else's image, `404` response will be sent. `403` is not used for security reason.
 
 ## API endpoints:
 

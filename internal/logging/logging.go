@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	globalLevel = INFO_LEVEL
+	globalLevel = DEBUG_LEVEL
 	mu          sync.Mutex
 )
 
