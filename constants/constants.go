@@ -15,6 +15,8 @@ const (
 	IMAGE_SIZE_H_S    = 120
 	IMAGE_SIZE_W_M    = 0 // set to 0 to keep original ratio of image
 	IMAGE_SIZE_H_M    = 600
+	IMAGE_SIZE_W_L    = 0 // return image with original size
+	IMAGE_SIZE_H_L    = 0
 	IMAGE_SIZE_SMALL  = "small"
 	IMAGE_SIZE_MEDIUM = "medium"
 	IMAGE_SIZE_LARGE  = "large"

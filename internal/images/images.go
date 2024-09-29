@@ -25,8 +25,8 @@ func NewService() ServiceType {
 	return &Service{}
 }
 
-func (s *Service) GenerateImages(srcPath, destDir string) error {
-	logging.Debugf("GenerateImages(srcPath: %s, destDir: %s)", srcPath, destDir)
+func (s *Service) GenerateImages(fileBytes *[]byte, srcPath, destDir string) error {
+	logging.Debugf("GenerateImages(len(fileBytes): %d, destDir: %s)", len(*fileBytes), destDir)
 
 	mkErr := os.MkdirAll(destDir, 0755)
 	if mkErr != nil {
@@ -34,43 +34,57 @@ func (s *Service) GenerateImages(srcPath, destDir string) error {
 		return err
 	}
 
-	smallImg, resizeSmallErr := resizeImage(srcPath, constants.IMAGE_SIZE_W_S, constants.IMAGE_SIZE_H_S)
-	if resizeSmallErr != nil {
-		return fmt.Errorf(
-			"ResizeImage(srcPath: %s, width: %d, height: %d) failed, err: %s",
-			srcPath, constants.IMAGE_SIZE_H_S, constants.IMAGE_SIZE_H_S, resizeSmallErr.Error(),
-		)
-	}
-	saveSmallErr := saveImage(&smallImg, utils.GetOutputPath(srcPath, destDir, "small"))
-	if saveSmallErr != nil {
-		return fmt.Errorf("saveImage() failed, err: %s", saveSmallErr.Error())
-	}
-
-	mediumImg, resizeErr2 := resizeImage(srcPath, constants.IMAGE_SIZE_W_M, constants.IMAGE_SIZE_H_M)
-	if resizeErr2 != nil {
-		return fmt.Errorf(
-			"ResizeImage(srcPath: %s, width: %d, height: %d) failed, err: %s",
-			srcPath, constants.IMAGE_SIZE_W_M, constants.IMAGE_SIZE_H_M, resizeErr2.Error(),
-		)
-	}
-	saveMediumErr := saveImage(&mediumImg, utils.GetOutputPath(srcPath, destDir, "medium"))
-	if saveMediumErr != nil {
-		return fmt.Errorf("saveImage() failed, err: %s", saveMediumErr.Error())
-	}
-
-	fileBytes, readErr := os.ReadFile(srcPath)
-	if readErr != nil {
-		return fmt.Errorf("saveImage() failed, err: %s", readErr.Error())
-	}
-	saveLargeErr := saveImage(&fileBytes, utils.GetOutputPath(srcPath, destDir, "large"))
+	// // create image with original size
+	saveLargeErr := saveImage(fileBytes, utils.GenerateDestPath(srcPath, destDir, "large"))
 	if saveLargeErr != nil {
 		return fmt.Errorf("saveImage() failed, err: %s", saveLargeErr.Error())
+	}
+
+	sizes := []string{"small", "medium"}
+	img, _, decodeErr := image.Decode(bytes.NewReader(*fileBytes))
+	if decodeErr != nil {
+		return fmt.Errorf("image.Decode() failed, err: %s", decodeErr.Error())
+	}
+
+	width := 0
+	height := 0
+	for _, size := range sizes {
+
+		if size == "small" {
+			width = constants.IMAGE_SIZE_W_S
+			height = constants.IMAGE_SIZE_H_S
+		}
+
+		if size == "meidum" {
+			width = constants.IMAGE_SIZE_W_M
+			height = constants.IMAGE_SIZE_H_M
+		}
+
+		if size == "large" {
+			width = constants.IMAGE_SIZE_W_L
+			height = constants.IMAGE_SIZE_H_L
+		}
+
+		resizedImg, resizeErr := resizeImage(&img, width, height)
+		if resizeErr != nil {
+			return fmt.Errorf(
+				"resizeImage(srcPath: %s, width: %d, height: %d) failed, err: %s",
+				srcPath, constants.IMAGE_SIZE_H_S, constants.IMAGE_SIZE_H_S, resizeErr.Error(),
+			)
+		}
+
+		destPath := utils.GenerateDestPath(srcPath, destDir, size)
+		logging.Debugf("destPath: %s", destPath)
+		saveErr := saveImage(&resizedImg, destPath)
+		if saveErr != nil {
+			return fmt.Errorf("saveImage(destPath: %s) failed, err: %s", destPath, saveErr.Error())
+		}
 	}
 
 	return nil
 }
 
-func (s *Service) DecodeImage(r *http.Request) ([]byte, error) {
+func (s *Service) ParseImage(r *http.Request) ([]byte, error) {
 	parseErr := r.ParseMultipartForm(constants.MAX_UPLOAD_SIZE)
 	if parseErr != nil {
 		return nil, fmt.Errorf("r.ParseMultipartForm() failed, err: %s", parseErr.Error())
@@ -103,13 +117,13 @@ func (s *Service) DecodeImage(r *http.Request) ([]byte, error) {
 	return fileBytes, nil
 }
 
-func (s *Service) SaveUpload(bytes []byte, destDir string) (string, error) {
-	logging.Debugf("SaveUpload(len(bytes): %d, destDir: %s)", len(bytes), destDir)
+func (s *Service) SaveUpload(bytes *[]byte, destDir string) (string, error) {
+	logging.Debugf("SaveUpload(len(bytes): %d, destDir: %s)", len(*bytes), destDir)
 
 	fileName := strings.ReplaceAll(uuid.New().String()+".jpg", "-", "")
 	destPath := filepath.Join(destDir, fileName)
 
-	saveImage(&bytes, destPath)
+	saveImage(bytes, destPath)
 
 	return destPath, nil
 }
@@ -131,22 +145,11 @@ func (s *Service) GetImage(receiptId, size, srcDir string) ([]byte, string, erro
 	return fileBytes, fName, nil
 }
 
-func resizeImage(srcPath string, width, height int) ([]byte, error) {
-	logging.Debugf("resizeImage(srcPath: %s, width: %d, height: %d)", srcPath, width, height)
-
-	file, err := os.Open(srcPath)
-	if err != nil {
-		return nil, fmt.Errorf("os.Open() failed: %v", err)
-	}
-	defer file.Close()
-
-	img, _, err := image.Decode(file)
-	if err != nil {
-		return nil, fmt.Errorf("image.Decode() failed: %v", err)
-	}
+func resizeImage(img *image.Image, width, height int) ([]byte, error) {
+	logging.Debugf("resizeImage(width: %d, height: %d)", width, height)
 
 	var buf bytes.Buffer
-	resizedImg := resize.Resize(uint(width), uint(height), img, resize.Lanczos3)
+	resizedImg := resize.Resize(uint(width), uint(height), *img, resize.Lanczos3)
 	encodeErr := jpeg.Encode(&buf, resizedImg, nil)
 	if encodeErr != nil {
 		return nil, fmt.Errorf("jpeg.Encode() failed, err: %s", encodeErr.Error())

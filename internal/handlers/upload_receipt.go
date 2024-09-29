@@ -32,7 +32,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 	logging.Debugf("handlePost()")
 	username := r.Header.Get("username_token")
 
-	bytes, decodeErr := imagesService.DecodeImage(r)
+	bytes, decodeErr := imagesService.ParseImage(r)
 	if decodeErr != nil {
 		logging.Debugf("http_utils.DecodeImage() failed, err: %s", decodeErr.Error())
 		resp := http_responses.ErrorResponse{
@@ -42,7 +42,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		return
 	}
 
-	tmpFilePath, saveErr := imagesService.SaveUpload(bytes, config.UploadedDir)
+	tmpFilePath, saveErr := imagesService.SaveUpload(&bytes, config.UploadedDir)
 	if saveErr != nil {
 		logging.Errorf("utils.SaveUpload() failed, err: %s", saveErr.Error())
 		resp := http_responses.ErrorResponse{
@@ -53,7 +53,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 	}
 
 	destDir := filepath.Join(config.GeneratedDir, username)
-	genErr := imagesService.GenerateImages(tmpFilePath, destDir)
+	genErr := imagesService.GenerateImages(&bytes, tmpFilePath, destDir)
 	if genErr != nil {
 		logging.Errorf("images.GenerateImages() failed, err: %s", genErr.Error())
 		resp := http_responses.ErrorResponse{
