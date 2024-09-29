@@ -20,9 +20,8 @@ import (
 func TestMain(t *testing.T) {
 	baseDir := "integ-test-images"
 	config := &configs.Config{
-		Port:         ":8080",
-		UploadedDir:  filepath.Join(baseDir, "uploaded"),
-		GeneratedDir: filepath.Join(baseDir, "generated"),
+		Port:      ":8080",
+		ImagesDir: filepath.Join(baseDir, "images"),
 	}
 	baseUrl := "http://localhost" + config.Port
 	url := baseUrl + "/receipts"

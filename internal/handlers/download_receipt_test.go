@@ -18,20 +18,18 @@ import (
 
 func TestDownloadReceiptHandler(t *testing.T) {
 	config := configs.Config{
-		UploadedDir:  "./mock-get-tmp",
-		GeneratedDir: "./mock-get-images",
+		ImagesDir: "./mock-get-images",
 	}
 
 	test_utils.InitTestServer(&config)
-	defer os.RemoveAll(config.UploadedDir)
-	defer os.RemoveAll(config.GeneratedDir)
+	defer os.RemoveAll(config.ImagesDir)
 
 	imagesService := images.NewService()
 	t.Run("return 200, size=small", func(t *testing.T) {
 		receiptId := "testgetimage"
 		size := "small"
 		fileName := receiptId + "_" + size + ".jpg"
-		fPath := filepath.Join(config.GeneratedDir, fileName)
+		fPath := filepath.Join(config.ImagesDir, fileName)
 
 		createErr := test_utils.CreateTestImage(fPath, 300, 300)
 		assert.Nil(t, createErr)
@@ -104,7 +102,7 @@ func TestDownloadReceiptHandler(t *testing.T) {
 
 	t.Run("return 500, GetImage() failed", func(t *testing.T) {
 		mockConfig := configs.Config{
-			GeneratedDir: "mock_get_image_failed",
+			ImagesDir: "mock_get_image_failed",
 		}
 		mockImagesService := images_mock.ServiceMock{}
 

@@ -16,15 +16,8 @@ import (
 func StartServer(config *configs.Config) {
 	fmt.Println("starting server...")
 
-	fmt.Printf("creating dir: %s to store uploaded receipts\n", config.UploadedDir)
-	tmpErr := os.MkdirAll(config.UploadedDir, 0755)
-	if tmpErr != nil {
-		fmt.Printf("failed to start server, err: %s", tmpErr.Error())
-		return
-	}
-
-	fmt.Printf("creating dir: %s to store generated images of receipts\n", config.GeneratedDir)
-	imagesErr := os.MkdirAll(config.GeneratedDir, 0755)
+	fmt.Printf("creating dir: %s to store images\n", config.ImagesDir)
+	imagesErr := os.MkdirAll(config.ImagesDir, 0755)
 	if imagesErr != nil {
 		fmt.Printf("failed to start server, err: %s", imagesErr.Error())
 		return

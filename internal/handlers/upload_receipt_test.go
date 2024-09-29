@@ -16,14 +16,12 @@ import (
 
 func TestUploadReceiptHandler(t *testing.T) {
 	config := configs.Config{
-		UploadedDir:  "./mock-tmp",
-		GeneratedDir: "./mock-images",
+		ImagesDir: "./mock-images",
 	}
 	userToken := ""
 
 	test_utils.InitTestServer(&config)
-	defer os.RemoveAll(config.UploadedDir)
-	defer os.RemoveAll(config.GeneratedDir)
+	defer os.RemoveAll(config.ImagesDir)
 
 	imagesService := images.NewService()
 
@@ -67,7 +65,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 
 	t.Run("should fail, GenerateImages() failed", func(t *testing.T) {
 		mockConfig := configs.Config{
-			GeneratedDir: "mock_generate_images_failed",
+			ImagesDir: "mock_generate_images_failed",
 		}
 		mockImagesService := images_mock.ServiceMock{}
 

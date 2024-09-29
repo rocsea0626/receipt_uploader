@@ -41,7 +41,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, config *configs.Config, i
 		return
 	}
 
-	srcDir := filepath.Join(config.GeneratedDir, username)
+	srcDir := filepath.Join(config.ImagesDir, username)
 	fileBytes, fileName, getErr := imagesService.GetImage(receiptId, size, srcDir)
 	if getErr != nil {
 		logging.Errorf("images.GetImage() failed, err: %s", getErr.Error())

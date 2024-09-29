@@ -42,7 +42,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		return
 	}
 
-	tmpFilePath, saveErr := imagesService.SaveUpload(&bytes, config.UploadedDir)
+	orgFilePath, saveErr := imagesService.SaveUpload(&bytes, config.ImagesDir)
 	if saveErr != nil {
 		logging.Errorf("utils.SaveUpload() failed, err: %s", saveErr.Error())
 		resp := http_responses.ErrorResponse{
@@ -52,8 +52,8 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		return
 	}
 
-	destDir := filepath.Join(config.GeneratedDir, username)
-	genErr := imagesService.GenerateImages(&bytes, tmpFilePath, destDir)
+	destDir := filepath.Join(config.ImagesDir, username)
+	genErr := imagesService.GenerateImages(&bytes, orgFilePath, destDir)
 	if genErr != nil {
 		logging.Errorf("images.GenerateImages() failed, err: %s", genErr.Error())
 		resp := http_responses.ErrorResponse{
@@ -63,7 +63,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		return
 	}
 
-	receiptID := utils.GetFileName(tmpFilePath)
+	receiptID := utils.GetFileName(orgFilePath)
 	resp := http_responses.UploadResponse{
 		ReceiptID: receiptID,
 	}

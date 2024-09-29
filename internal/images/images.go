@@ -120,6 +120,12 @@ func (s *Service) ParseImage(r *http.Request) ([]byte, error) {
 func (s *Service) SaveUpload(bytes *[]byte, destDir string) (string, error) {
 	logging.Debugf("SaveUpload(len(bytes): %d, destDir: %s)", len(*bytes), destDir)
 
+	mkErr := os.MkdirAll(destDir, 0755)
+	if mkErr != nil {
+		err := fmt.Errorf("os.Mkdir() failed, err: %s", mkErr.Error())
+		return "", err
+	}
+
 	fileName := strings.ReplaceAll(uuid.New().String()+".jpg", "-", "")
 	destPath := filepath.Join(destDir, fileName)
 

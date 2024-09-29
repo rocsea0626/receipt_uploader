@@ -59,9 +59,8 @@ func LoadConfig() (*configs.Config, error) {
 	}
 
 	config := &configs.Config{
-		Port:         os.Getenv("PORT"),
-		UploadedDir:  filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_UPLOAD")),
-		GeneratedDir: filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_GENERATED")),
+		Port:      os.Getenv("PORT"),
+		ImagesDir: filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_IMAGES")),
 	}
 
 	return config, nil
