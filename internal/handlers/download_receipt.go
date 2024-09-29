@@ -31,7 +31,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, config *configs.Config, i
 	logging.Debugf("handleGet(), path: %s", r.URL.Path)
 	username := r.Header.Get("username_token")
 
-	receiptId, size, validateErr := http_utils.ValidateGetImageRequest(r)
+	receiptId, size, validateErr := http_utils.ValidateGetImageRequest(r, &config.Dimensions)
 	if validateErr != nil {
 		logging.Errorf("http_utils.ValidateGetImageRequest() failed, err: %s", validateErr.Error())
 		resp := http_responses.ErrorResponse{

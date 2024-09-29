@@ -16,14 +16,15 @@ import (
 
 func TestUploadReceiptHandler(t *testing.T) {
 	config := configs.Config{
-		ImagesDir: "./mock-images",
+		ImagesDir:  "./mock-images",
+		Dimensions: configs.AllowedDimensions,
 	}
 	userToken := ""
 
 	test_utils.InitTestServer(&config)
 	defer os.RemoveAll(config.ImagesDir)
 
-	imagesService := images.NewService()
+	imagesService := images.NewService(&config.Dimensions)
 
 	t.Run("succeed, POST, 1200x1200 image", func(t *testing.T) {
 		fileName := "test_image_save_upload.jpg"

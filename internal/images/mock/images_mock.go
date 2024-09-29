@@ -13,10 +13,10 @@ func (s *ServiceMock) ParseImage(r *http.Request) ([]byte, error) {
 	return nil, nil
 }
 
-func (s *ServiceMock) GenerateImages(bytes *[]byte, srcPath, destDir string) error {
-	log.Printf("images_mock.GenerateImages(srcPath: %s)", srcPath)
+func (s *ServiceMock) GenerateResizedImages(bytes *[]byte, srcPath, destDir string) error {
+	log.Printf("images_mock.GenerateResizedImages(srcPath: %s)", srcPath)
 	if destDir == "mock_generate_images_failed" {
-		return errors.New("mock GenerateImages() failed")
+		return errors.New("mock GenerateResizedImages() failed")
 	}
 	return nil
 }

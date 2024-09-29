@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/logging"
+	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
 	"regexp"
 	"strconv"
@@ -53,7 +54,7 @@ func SendImageDownloadResponse(w http.ResponseWriter, fileName string, fileBytes
 	}
 }
 
-func ValidateGetImageRequest(r *http.Request) (string, string, error) {
+func ValidateGetImageRequest(r *http.Request, dimensions *configs.Dimensions) (string, string, error) {
 	logging.Debugf("r.URL.Path: %s", r.URL.Path)
 
 	receiptID := strings.TrimPrefix(r.URL.Path, "/receipts/")
@@ -65,8 +66,24 @@ func ValidateGetImageRequest(r *http.Request) (string, string, error) {
 	}
 
 	size := r.URL.Query().Get("size")
-	if size != constants.IMAGE_SIZE_SMALL && size != constants.IMAGE_SIZE_MEDIUM && size != constants.IMAGE_SIZE_LARGE {
-		return "", "", fmt.Errorf("invalid size parameter, size: %s", size)
+
+	if size != "" {
+		isValidSize := false
+		for _, dimension := range *dimensions {
+			if dimension.Name == size {
+				isValidSize = true
+				break
+			}
+		}
+		if !isValidSize {
+			return "", "", fmt.Errorf("invalid size parameter, size: %s", size)
+		}
+	}
+
+	for key := range r.URL.Query() {
+		if key != "size" {
+			return "", "", fmt.Errorf("unrecognized parameter: %s", key)
+		}
 	}
 
 	return receiptID, size, nil

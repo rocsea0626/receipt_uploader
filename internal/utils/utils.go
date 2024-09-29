@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"receipt_uploader/constants"
@@ -13,8 +12,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// get file name without extension
-func GetFileName(filePath string) string {
+// extract file name without extension
+func ExtractFileName(filePath string) string {
 	base := filepath.Base(filePath)
 	extension := filepath.Ext(filePath)
 	fName := strings.TrimSuffix(base, extension)
@@ -30,21 +29,10 @@ func GetFileName(filePath string) string {
 // output := "/path/to/output/file_small.jpg"
 func GenerateDestPath(srcPath string, destDir string, size string) string {
 	logging.Debugf("size: %s", size)
-	fName := GetFileName(srcPath)
+	fName := ExtractFileName(srcPath)
 	extension := filepath.Ext(srcPath)
 	newFilename := fmt.Sprintf("%s_%s%s", fName, size, extension)
 	return filepath.Join(destDir, newFilename)
-}
-
-func ValidateGetImageRequest(r *http.Request) (string, string, error) {
-	receiptID := strings.TrimPrefix(r.URL.Path, "/receipts/")
-
-	size := r.URL.Query().Get("size")
-	if size != constants.IMAGE_SIZE_SMALL && size != constants.IMAGE_SIZE_MEDIUM && size != constants.IMAGE_SIZE_LARGE {
-		return "", "", fmt.Errorf("invalid size parameter, size: %s", size)
-	}
-
-	return receiptID, size, nil
 }
 
 func LoadConfig() (*configs.Config, error) {
@@ -59,8 +47,9 @@ func LoadConfig() (*configs.Config, error) {
 	}
 
 	config := &configs.Config{
-		Port:      os.Getenv("PORT"),
-		ImagesDir: filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_IMAGES")),
+		Port:       os.Getenv("PORT"),
+		ImagesDir:  filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_IMAGES")),
+		Dimensions: configs.AllowedDimensions,
 	}
 
 	return config, nil

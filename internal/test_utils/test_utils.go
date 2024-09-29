@@ -82,3 +82,13 @@ func GetFileSize(filePath string) (int64, error) {
 
 	return fileInfo.Size(), nil
 }
+
+func GetImageDimension(t *testing.T, resp *http.Response) (int, int) {
+	fileBytes, readErr := io.ReadAll(resp.Body)
+	assert.Nil(t, readErr)
+
+	img, _, decodeErr := image.Decode(bytes.NewReader(fileBytes))
+	assert.Nil(t, decodeErr)
+
+	return img.Bounds().Dx(), img.Bounds().Dy()
+}

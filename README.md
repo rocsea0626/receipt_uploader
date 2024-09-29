@@ -33,7 +33,8 @@ All images are stored under `images` folder.
 
 
 - Downloading of receipt 
-  - Handled by request of `GET /api/receipts/{receiptId}?size=small|medium|large`
+  - To get images with different size: `GET /api/receipts/{receiptId}?size=small|medium|large`
+  - To get image with original size: `GET /api/receipts/{receiptId}`
   - Each request must have 1 attribute in header: `username_token`
   - `size` is required, otherwise request will be rejected
 

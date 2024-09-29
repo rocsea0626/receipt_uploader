@@ -23,7 +23,7 @@ func StartServer(config *configs.Config) {
 		return
 	}
 
-	imagesService := images.NewService()
+	imagesService := images.NewService(&config.Dimensions)
 
 	http.HandleFunc("/health", handlers.HealthHandler())
 	http.Handle("/receipts",

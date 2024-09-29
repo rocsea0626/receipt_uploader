@@ -5,6 +5,7 @@ import (
 	"image"
 	"os"
 	"path/filepath"
+	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/test_utils"
 	"receipt_uploader/internal/utils"
 	"testing"
@@ -19,7 +20,7 @@ func TestGenerateImages(t *testing.T) {
 	os.MkdirAll(destDir, 0755)
 	defer os.RemoveAll(destDir)
 
-	service := NewService()
+	service := NewService(&configs.AllowedDimensions)
 
 	t.Run("succeed", func(t *testing.T) {
 		createErr := test_utils.CreateTestImage(srcPath, 800, 1200)
@@ -28,7 +29,7 @@ func TestGenerateImages(t *testing.T) {
 		fileBytes, readErr := os.ReadFile(srcPath)
 		assert.Nil(t, readErr)
 
-		genErr := service.GenerateImages(&fileBytes, srcPath, destDir)
+		genErr := service.GenerateResizedImages(&fileBytes, srcPath, destDir)
 		assert.Nil(t, genErr)
 
 		smallImagePath := utils.GenerateDestPath(srcPath, destDir, "small")
@@ -79,15 +80,15 @@ func TestResizeImage(t *testing.T) {
 }
 
 func TestGetImage(t *testing.T) {
-	srcDir := "./mock-get-images/"
+	srcDir := "./mock-get-images"
 
 	os.MkdirAll(srcDir, 0755)
 	defer os.RemoveAll(srcDir)
 
-	service := NewService()
+	service := NewService(&configs.AllowedDimensions)
 
 	t.Run("succeed, size=small", func(t *testing.T) {
-		receiptId := "test-get-image"
+		receiptId := "test1get2image"
 		size := "small"
 		fileName := receiptId + "_" + size + ".jpg"
 		fPath := filepath.Join(srcDir, fileName)

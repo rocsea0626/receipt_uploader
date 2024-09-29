@@ -20,8 +20,9 @@ import (
 func TestMain(t *testing.T) {
 	baseDir := "integ-test-images"
 	config := &configs.Config{
-		Port:      ":8080",
-		ImagesDir: filepath.Join(baseDir, "images"),
+		Port:       ":8080",
+		ImagesDir:  filepath.Join(baseDir, "images"),
+		Dimensions: configs.AllowedDimensions,
 	}
 	baseUrl := "http://localhost" + config.Port
 	url := baseUrl + "/receipts"
@@ -103,9 +104,6 @@ func TestMain(t *testing.T) {
 		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath, userToken)
 		assert.Nil(t, reqErr)
 
-		orgFileSize, sizeErr := test_utils.GetFileSize(uploadFilePath)
-		assert.Nil(t, sizeErr)
-
 		resp, err := client.Do(req)
 		assert.Nil(t, err)
 		defer resp.Body.Close()
@@ -132,6 +130,50 @@ func TestMain(t *testing.T) {
 		assert.Equal(t, "application/octet-stream", header.ContentType)
 
 		fileName := uploadResp.ReceiptID + "_" + size + ".jpg"
+		assert.Equal(t, fileName, header.Filename)
+
+		_, height := test_utils.GetImageDimension(t, getResp)
+		assert.Equal(t, 800, height)
+	})
+
+	t.Run("return 200, GET /receipts/{receiptId}", func(t *testing.T) {
+		uploadFilePath := "./integ-test.jpg"
+		userToken := "valid_user"
+
+		test_utils.CreateTestImage(uploadFilePath, 1000, 1200)
+		defer os.Remove(uploadFilePath)
+		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath, userToken)
+		assert.Nil(t, reqErr)
+
+		orgFileSize, sizeErr := test_utils.GetFileSize(uploadFilePath)
+		assert.Nil(t, sizeErr)
+
+		resp, err := client.Do(req)
+		assert.Nil(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+		var uploadResp http_responses.UploadResponse
+		http_utils.ParseResponseBody(t, resp, &uploadResp)
+		assert.NotEmpty(t, uploadResp.ReceiptID)
+
+		getUrl := fmt.Sprintf("%s/%s", url, uploadResp.ReceiptID)
+		logging.Debugf("getUrl: %s", getUrl)
+		getReq, getReqErr := http.NewRequest(http.MethodGet, getUrl, nil)
+		getReq.Header.Set("username_token", userToken)
+		assert.Nil(t, getReqErr)
+
+		getResp, getErr := client.Do(getReq)
+		assert.Nil(t, getErr)
+		defer getResp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, getResp.StatusCode)
+		header, headerErr := http_utils.ParseDownloadResponseHeader(getResp)
+		assert.Nil(t, headerErr)
+		assert.Equal(t, "application/octet-stream", header.ContentType)
+
+		fileName := uploadResp.ReceiptID + ".jpg"
 		assert.Equal(t, fileName, header.Filename)
 
 		getRespBody, getReadErr := io.ReadAll(getResp.Body)

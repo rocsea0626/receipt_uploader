@@ -18,13 +18,14 @@ import (
 
 func TestDownloadReceiptHandler(t *testing.T) {
 	config := configs.Config{
-		ImagesDir: "./mock-get-images",
+		ImagesDir:  "./mock-get-images",
+		Dimensions: configs.AllowedDimensions,
 	}
 
 	test_utils.InitTestServer(&config)
 	defer os.RemoveAll(config.ImagesDir)
 
-	imagesService := images.NewService()
+	imagesService := images.NewService(&config.Dimensions)
 	t.Run("return 200, size=small", func(t *testing.T) {
 		receiptId := "testgetimage"
 		size := "small"
@@ -102,7 +103,8 @@ func TestDownloadReceiptHandler(t *testing.T) {
 
 	t.Run("return 500, GetImage() failed", func(t *testing.T) {
 		mockConfig := configs.Config{
-			ImagesDir: "mock_get_image_failed",
+			ImagesDir:  "mock_get_image_failed",
+			Dimensions: configs.AllowedDimensions,
 		}
 		mockImagesService := images_mock.ServiceMock{}
 
