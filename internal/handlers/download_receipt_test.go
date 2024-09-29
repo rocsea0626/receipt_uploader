@@ -19,11 +19,13 @@ import (
 func TestDownloadReceiptHandler(t *testing.T) {
 	config := configs.Config{
 		ImagesDir:  "./mock-get-images",
+		UploadsDir: "./mock-get-uploads",
 		Dimensions: configs.AllowedDimensions,
 	}
 
 	test_utils.InitTestServer(&config)
 	defer os.RemoveAll(config.ImagesDir)
+	defer os.RemoveAll(config.UploadsDir)
 
 	imagesService := images.NewService(&config.Dimensions)
 	t.Run("return 200, size=small", func(t *testing.T) {

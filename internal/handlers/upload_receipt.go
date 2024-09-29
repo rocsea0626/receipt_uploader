@@ -31,7 +31,6 @@ func UploadReceipt(config *configs.Config, imagesService images.ServiceType) htt
 func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, imagesService images.ServiceType) {
 	logging.Debugf("handlePost()")
 	username := r.Header.Get("username_token")
-	destDir := filepath.Join(config.ImagesDir, username)
 
 	bytes, decodeErr := imagesService.ParseImage(r)
 	if decodeErr != nil {
@@ -43,7 +42,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		return
 	}
 
-	orgFilePath, saveErr := imagesService.SaveUpload(&bytes, destDir)
+	orgFilePath, saveErr := imagesService.SaveUpload(&bytes, config.UploadsDir)
 	if saveErr != nil {
 		logging.Errorf("utils.SaveUpload() failed, err: %s", saveErr.Error())
 		resp := http_responses.ErrorResponse{
@@ -53,7 +52,8 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		return
 	}
 
-	genErr := imagesService.GenerateResizedImages(&bytes, orgFilePath, destDir)
+	destDir := filepath.Join(config.ImagesDir, username)
+	genErr := imagesService.GenerateResizedImages(orgFilePath, destDir)
 	if genErr != nil {
 		logging.Errorf("images.GenerateImages() failed, err: %s", genErr.Error())
 		resp := http_responses.ErrorResponse{

@@ -26,10 +26,7 @@ func TestGenerateImages(t *testing.T) {
 		createErr := test_utils.CreateTestImage(srcPath, 800, 1200)
 		assert.Nil(t, createErr)
 
-		fileBytes, readErr := os.ReadFile(srcPath)
-		assert.Nil(t, readErr)
-
-		genErr := service.GenerateResizedImages(&fileBytes, srcPath, destDir)
+		genErr := service.GenerateResizedImages(srcPath, destDir)
 		assert.Nil(t, genErr)
 
 		smallImagePath := utils.GenerateDestPath(srcPath, destDir, "small")

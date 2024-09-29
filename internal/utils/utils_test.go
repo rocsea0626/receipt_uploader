@@ -21,6 +21,12 @@ func TestGenerateDestPath(t *testing.T) {
 		assert.Equal(t, "output/test_resize_image_medium", newPath)
 	})
 
+	t.Run("succeed, no size", func(t *testing.T) {
+		fPath := "/input/test_resize_image.jpg"
+		newPath := GenerateDestPath(fPath, outputDir, "")
+		assert.Equal(t, "output/test_resize_image.jpg", newPath)
+	})
+
 	t.Run("succeed, no path & extension", func(t *testing.T) {
 		fPath := "test_resize_image"
 		newPath := GenerateDestPath(fPath, outputDir, "large")

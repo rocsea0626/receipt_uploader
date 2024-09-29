@@ -29,6 +29,7 @@ var AllowedDimensions = Dimensions{
 
 type Config struct {
 	ImagesDir  string // dir to store images
+	UploadsDir string // dir to store uploads
 	Port       string
 	Dimensions Dimensions
 }

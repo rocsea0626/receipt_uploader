@@ -16,6 +16,7 @@ import (
 
 func TestUploadReceiptHandler(t *testing.T) {
 	config := configs.Config{
+		UploadsDir: "./mock-uploads",
 		ImagesDir:  "./mock-images",
 		Dimensions: configs.AllowedDimensions,
 	}
@@ -23,6 +24,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 
 	test_utils.InitTestServer(&config)
 	defer os.RemoveAll(config.ImagesDir)
+	defer os.RemoveAll(config.UploadsDir)
 
 	imagesService := images.NewService(&config.Dimensions)
 

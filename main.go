@@ -23,6 +23,13 @@ func StartServer(config *configs.Config) {
 		return
 	}
 
+	fmt.Printf("creating dir: %s to store images\n", config.ImagesDir)
+	uploadsErr := os.MkdirAll(config.UploadsDir, 0755)
+	if uploadsErr != nil {
+		fmt.Printf("failed to start server, err: %s", uploadsErr.Error())
+		return
+	}
+
 	imagesService := images.NewService(&config.Dimensions)
 
 	http.HandleFunc("/health", handlers.HealthHandler())

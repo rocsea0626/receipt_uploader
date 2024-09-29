@@ -22,6 +22,7 @@ func TestMain(t *testing.T) {
 	config := &configs.Config{
 		Port:       ":8080",
 		ImagesDir:  filepath.Join(baseDir, "images"),
+		UploadsDir: filepath.Join(baseDir, "uploads"),
 		Dimensions: configs.AllowedDimensions,
 	}
 	baseUrl := "http://localhost" + config.Port

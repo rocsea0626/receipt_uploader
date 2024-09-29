@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"receipt_uploader/constants"
-	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"strings"
 
@@ -28,10 +27,12 @@ func ExtractFileName(filePath string) string {
 // size := "small"
 // output := "/path/to/output/file_small.jpg"
 func GenerateDestPath(srcPath string, destDir string, size string) string {
-	logging.Debugf("size: %s", size)
 	fName := ExtractFileName(srcPath)
 	extension := filepath.Ext(srcPath)
-	newFilename := fmt.Sprintf("%s_%s%s", fName, size, extension)
+	newFilename := fmt.Sprintf("%s%s", fName, extension)
+	if size != "" {
+		newFilename = fmt.Sprintf("%s_%s%s", fName, size, extension)
+	}
 	return filepath.Join(destDir, newFilename)
 }
 
@@ -49,6 +50,7 @@ func LoadConfig() (*configs.Config, error) {
 	config := &configs.Config{
 		Port:       os.Getenv("PORT"),
 		ImagesDir:  filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_IMAGES")),
+		UploadsDir: filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_UPLOADS")),
 		Dimensions: configs.AllowedDimensions,
 	}
 

@@ -29,8 +29,13 @@ func NewService(d *configs.Dimensions) ServiceType {
 	}
 }
 
-func (s *Service) GenerateResizedImages(fileBytes *[]byte, srcPath, destDir string) error {
-	logging.Debugf("GenerateResizedImages(len(fileBytes): %d, destDir: %s)", len(*fileBytes), destDir)
+func (s *Service) GenerateResizedImages(srcPath, destDir string) error {
+	logging.Debugf("GenerateResizedImages(srcPath: %s, destDir: %s)", srcPath, destDir)
+
+	fileBytes, readErr := os.ReadFile(srcPath)
+	if readErr != nil {
+		return fmt.Errorf("os.ReadFile() failed: %v", readErr)
+	}
 
 	mkErr := os.MkdirAll(destDir, 0755)
 	if mkErr != nil {
@@ -38,7 +43,13 @@ func (s *Service) GenerateResizedImages(fileBytes *[]byte, srcPath, destDir stri
 		return err
 	}
 
-	img, _, decodeErr := image.Decode(bytes.NewReader(*fileBytes))
+	copyDestPath := utils.GenerateDestPath(srcPath, destDir, "")
+	copyErr := saveImage(&fileBytes, copyDestPath)
+	if copyErr != nil {
+		return fmt.Errorf("saveImage(copyDestPath: %s) failed, err: %s", copyDestPath, copyErr.Error())
+	}
+
+	img, _, decodeErr := image.Decode(bytes.NewReader(fileBytes))
 	if decodeErr != nil {
 		return fmt.Errorf("image.Decode() failed, err: %s", decodeErr.Error())
 	}
