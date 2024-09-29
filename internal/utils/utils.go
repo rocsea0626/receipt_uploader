@@ -8,16 +8,36 @@ import (
 	"os"
 	"path/filepath"
 	"receipt_uploader/constants"
-	"receipt_uploader/internal/handlers"
-	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/logging"
-	"receipt_uploader/internal/middlewares"
 	"receipt_uploader/internal/models/configs"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 )
+
+// get file name without extension
+func GetFileName(filePath string) string {
+	base := filepath.Base(filePath)
+	extension := filepath.Ext(filePath)
+	fName := strings.TrimSuffix(base, extension)
+	return fName
+}
+
+// GetOutputPath() generates a file path for the output file by taking an input file path,
+// an output directory, and size is appended to the file name as suffix.
+//
+// Example:
+// inputFilePath := "/path/to/input/file.txt"
+// outputDir := "/path/to/output"
+// size := "small"
+// outputPath := "/path/to/output/file_small.txt"
+func GetOutputPath(filePath string, outputDir string, size string) string {
+	fName := GetFileName(filePath)
+	extension := filepath.Ext(filePath)
+	newFilename := fmt.Sprintf("%s_%s%s", fName, size, extension)
+	return filepath.Join(outputDir, newFilename)
+}
 
 // save the original upload into tmpDir
 func SaveUploadedImage(r *http.Request, tmpDir string) (string, error) {
@@ -97,37 +117,4 @@ func LoadConfig() (*configs.Config, error) {
 	}
 
 	return config, nil
-}
-
-func StartServer(config *configs.Config) {
-	fmt.Println("starting server...")
-
-	fmt.Printf("creating dir: %s to store uploaded receipts\n", config.UploadedDir)
-	tmpErr := os.MkdirAll(config.UploadedDir, 0755)
-	if tmpErr != nil {
-		fmt.Printf("failed to start server, err: %s", tmpErr.Error())
-		return
-	}
-
-	fmt.Printf("creating dir: %s to store generated images of receipts\n", config.GeneratedDir)
-	imagesErr := os.MkdirAll(config.GeneratedDir, 0755)
-	if imagesErr != nil {
-		fmt.Printf("failed to start server, err: %s", imagesErr.Error())
-		return
-	}
-
-	imagesService := images.NewService()
-
-	http.HandleFunc("/health", handlers.HealthHandler())
-	http.Handle("/receipts",
-		middlewares.Auth(http.HandlerFunc(handlers.UploadReceipt(config, imagesService))),
-	)
-	http.Handle("/receipts/{receiptId}",
-		middlewares.Auth(http.HandlerFunc(handlers.DownloadReceipt(config, imagesService))),
-	)
-
-	fmt.Printf("Starting server on %s", constants.PORT)
-	if err := http.ListenAndServe(constants.PORT, nil); err != nil {
-		fmt.Println("Error starting server:", err)
-	}
 }

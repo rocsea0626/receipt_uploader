@@ -12,7 +12,6 @@ import (
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
 	"receipt_uploader/internal/test_utils"
-	"receipt_uploader/internal/utils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,7 +28,7 @@ func TestMain(t *testing.T) {
 	url := baseUrl + "/receipts"
 	defer os.RemoveAll(baseDir)
 
-	go utils.StartServer(config)
+	go StartServer(config)
 	client := &http.Client{}
 
 	t.Run("return 200, /health", func(t *testing.T) {

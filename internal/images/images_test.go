@@ -5,8 +5,8 @@ import (
 	"image"
 	"os"
 	"path/filepath"
-	"receipt_uploader/internal/futils"
 	"receipt_uploader/internal/test_utils"
+	"receipt_uploader/internal/utils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,9 +27,9 @@ func TestGenerateImages(t *testing.T) {
 		genErr := service.GenerateImages(inputPath, outputDir)
 		assert.Nil(t, genErr)
 
-		smallImagePath := futils.GetOutputPath(inputPath, outputDir, "small")
-		mediumImagePath := futils.GetOutputPath(inputPath, outputDir, "medium")
-		largeImagePath := futils.GetOutputPath(inputPath, outputDir, "large")
+		smallImagePath := utils.GetOutputPath(inputPath, outputDir, "small")
+		mediumImagePath := utils.GetOutputPath(inputPath, outputDir, "medium")
+		largeImagePath := utils.GetOutputPath(inputPath, outputDir, "large")
 
 		_, smallErr := os.Stat(smallImagePath)
 		assert.Nil(t, smallErr)

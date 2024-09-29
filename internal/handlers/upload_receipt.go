@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"path/filepath"
 	"receipt_uploader/constants"
-	"receipt_uploader/internal/futils"
 	"receipt_uploader/internal/http_utils"
 	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
+	"receipt_uploader/internal/utils"
 )
 
 func UploadReceipt(config *configs.Config, imagesService images.ServiceType) http.HandlerFunc {
@@ -63,7 +63,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		return
 	}
 
-	receiptID := futils.GetFileName(tmpFilePath)
+	receiptID := utils.GetFileName(tmpFilePath)
 	resp := http_responses.UploadResponse{
 		ReceiptID: receiptID,
 	}

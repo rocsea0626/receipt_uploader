@@ -1,6 +1,6 @@
 .PHONY: start start-dev dev build build-dev test test-verbose submit
 
-UNIT_TEST=go test -coverpkg=./... -coverprofile=coverage.out ./internal/utils/... ./internal/http_utils/... ./internal/images/... ./internal/futils/... ./internal/handlers/... ./internal/middlewares/...
+UNIT_TEST=go test -coverpkg=./... -coverprofile=coverage.out ./internal/utils/... ./internal/http_utils/... ./internal/images/... ./internal/handlers/... ./internal/middlewares/...
 INTEG_TEST=go test ./
 VERBOSE=-v
 

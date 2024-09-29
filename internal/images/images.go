@@ -10,8 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"receipt_uploader/constants"
-	"receipt_uploader/internal/futils"
 	"receipt_uploader/internal/logging"
+	"receipt_uploader/internal/utils"
 	"strings"
 
 	"github.com/google/uuid"
@@ -41,7 +41,7 @@ func (s *Service) GenerateImages(srcPath, destDir string) error {
 			srcPath, constants.IMAGE_SIZE_H_S, constants.IMAGE_SIZE_H_S, resizeSmallErr.Error(),
 		)
 	}
-	saveSmallErr := saveImage(&smallImg, futils.GetOutputPath(srcPath, destDir, "small"))
+	saveSmallErr := saveImage(&smallImg, utils.GetOutputPath(srcPath, destDir, "small"))
 	if saveSmallErr != nil {
 		return fmt.Errorf("saveImage() failed, err: %s", saveSmallErr.Error())
 	}
@@ -53,7 +53,7 @@ func (s *Service) GenerateImages(srcPath, destDir string) error {
 			srcPath, constants.IMAGE_SIZE_W_M, constants.IMAGE_SIZE_H_M, resizeErr2.Error(),
 		)
 	}
-	saveMediumErr := saveImage(&mediumImg, futils.GetOutputPath(srcPath, destDir, "medium"))
+	saveMediumErr := saveImage(&mediumImg, utils.GetOutputPath(srcPath, destDir, "medium"))
 	if saveMediumErr != nil {
 		return fmt.Errorf("saveImage() failed, err: %s", saveMediumErr.Error())
 	}
@@ -62,7 +62,7 @@ func (s *Service) GenerateImages(srcPath, destDir string) error {
 	if readErr != nil {
 		return fmt.Errorf("saveImage() failed, err: %s", readErr.Error())
 	}
-	saveLargeErr := saveImage(&fileBytes, futils.GetOutputPath(srcPath, destDir, "large"))
+	saveLargeErr := saveImage(&fileBytes, utils.GetOutputPath(srcPath, destDir, "large"))
 	if saveLargeErr != nil {
 		return fmt.Errorf("saveImage() failed, err: %s", saveLargeErr.Error())
 	}
