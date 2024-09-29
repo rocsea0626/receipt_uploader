@@ -8,10 +8,10 @@ import (
 
 func main() {
 	config, configErr := utils.LoadConfig()
-	logging.SetGlobalLevel(logging.DEBUG)
+	logging.SetGlobalLevel(logging.DEBUG_LEVEL)
 
 	if configErr != nil {
-		logging.Printf("utils.LoadConfig() failed, err: %s", configErr.Error())
+		fmt.Printf("utils.LoadConfig() failed, err: %s", configErr.Error())
 		fmt.Println("failed to load config")
 		return
 	}

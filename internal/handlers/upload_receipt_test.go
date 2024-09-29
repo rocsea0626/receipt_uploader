@@ -69,9 +69,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		mockConfig := configs.Config{
 			GeneratedDir: "mock_generate_images_failed",
 		}
-		mockImagesService := images_mock.ServiceMock{
-			Config: &mockConfig,
-		}
+		mockImagesService := images_mock.ServiceMock{}
 
 		req, reqErr := http.NewRequest(http.MethodPost, "/receipts", nil)
 		assert.Nil(t, reqErr)

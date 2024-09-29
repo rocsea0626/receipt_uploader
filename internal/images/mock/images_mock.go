@@ -4,12 +4,9 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"receipt_uploader/internal/models/configs"
 )
 
-type ServiceMock struct {
-	Config *configs.Config
-}
+type ServiceMock struct{}
 
 func (s *ServiceMock) DecodeImage(r *http.Request) ([]byte, error) {
 	log.Println("images_mock.DecodeImage()")

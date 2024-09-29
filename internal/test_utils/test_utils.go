@@ -7,10 +7,10 @@ import (
 	"image/color"
 	"image/jpeg"
 	"io"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
+	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"testing"
 
@@ -70,14 +70,14 @@ func InitTestServer(config *configs.Config) error {
 		err := fmt.Errorf("os.Mkdir() failed, err: %s", tmpErr.Error())
 		return err
 	}
-	log.Printf("folder %s has been created", config.UploadedDir)
+	logging.Debugf("folder %s has been created", config.UploadedDir)
 
 	imagesErr := os.MkdirAll(config.GeneratedDir, 0755)
 	if imagesErr != nil {
 		err := fmt.Errorf("os.Mkdir() failed, err: %s", imagesErr.Error())
 		return err
 	}
-	log.Printf("folder %s has been created", config.GeneratedDir)
+	logging.Debugf("folder %s has been created", config.GeneratedDir)
 	return nil
 }
 

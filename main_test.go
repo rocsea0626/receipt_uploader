@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/http_utils"
+	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
 	"receipt_uploader/internal/test_utils"
@@ -119,7 +119,7 @@ func TestMain(t *testing.T) {
 		assert.NotEmpty(t, uploadResp.ReceiptID)
 
 		getUrl := fmt.Sprintf("%s/%s?size=%s", url, uploadResp.ReceiptID, size)
-		log.Println("getUrl: ", getUrl)
+		logging.Debugf("getUrl: %s", getUrl)
 		getReq, getReqErr := http.NewRequest(http.MethodGet, getUrl, nil)
 		getReq.Header.Set("username_token", userToken)
 		assert.Nil(t, getReqErr)
@@ -145,7 +145,8 @@ func TestMain(t *testing.T) {
 	t.Run("return 403, GET /receipts/{receiptId}?size=large, username_token missing", func(t *testing.T) {
 
 		getUrl := fmt.Sprintf("%s/%s?size=%s", url, "fakereceiptId", "small")
-		log.Println("getUrl: ", getUrl)
+		logging.Debugf("getUrl: %s", getUrl)
+
 		getReq, getReqErr := http.NewRequest(http.MethodGet, getUrl, nil)
 		assert.Nil(t, getReqErr)
 
@@ -159,7 +160,8 @@ func TestMain(t *testing.T) {
 	t.Run("return 403, GET /receipts/{receiptId}?size=large, token has wrong key", func(t *testing.T) {
 
 		getUrl := fmt.Sprintf("%s/%s?size=%s", url, "fakereceiptId", "small")
-		log.Println("getUrl: ", getUrl)
+		logging.Debugf("getUrl: %s", getUrl)
+
 		getReq, getReqErr := http.NewRequest(http.MethodGet, getUrl, nil)
 		getReq.Header.Set("wrong_token_key", "username_token_val")
 

@@ -1,20 +1,20 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/http_utils"
 	"receipt_uploader/internal/images"
+	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
 )
 
 func DownloadReceipt(config *configs.Config, imagesService images.ServiceType) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("r.Method: ", r.Method)
+		logging.Debugf("r.Method: %s", r.Method)
 		if http.MethodGet != r.Method {
 			resp := http_responses.ErrorResponse{
 				Error: constants.HTTP_ERR_MSG_405,
@@ -28,12 +28,12 @@ func DownloadReceipt(config *configs.Config, imagesService images.ServiceType) h
 }
 
 func handleGet(w http.ResponseWriter, r *http.Request, config *configs.Config, imagesService images.ServiceType) {
-	log.Printf("handleGet(), path: %s", r.URL.Path)
+	logging.Debugf("handleGet(), path: %s", r.URL.Path)
 	username := r.Header.Get("username_token")
 
 	receiptId, size, validateErr := http_utils.ValidateGetImageRequest(r)
 	if validateErr != nil {
-		log.Printf("http_utils.ValidateGetImageRequest() failed, err: %s", validateErr.Error())
+		logging.Errorf("http_utils.ValidateGetImageRequest() failed, err: %s", validateErr.Error())
 		resp := http_responses.ErrorResponse{
 			Error: constants.HTTP_ERR_MSG_400,
 		}
@@ -44,7 +44,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, config *configs.Config, i
 	srcDir := filepath.Join(config.GeneratedDir, username)
 	fileBytes, fileName, getErr := imagesService.GetImage(receiptId, size, srcDir)
 	if getErr != nil {
-		log.Printf("images.GetImage() failed, err: %s", getErr.Error())
+		logging.Errorf("images.GetImage() failed, err: %s", getErr.Error())
 		if os.IsNotExist(getErr) {
 			resp := http_responses.ErrorResponse{
 				Error: constants.HTTP_ERR_MSG_404,

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -22,7 +21,7 @@ import (
 
 // save the original upload into tmpDir
 func SaveUploadedImage(r *http.Request, tmpDir string) (string, error) {
-	log.Printf("SaveUploadedImage(tmpDir: %s)", tmpDir)
+	logging.Debugf("SaveUploadedImage(tmpDir: %s)", tmpDir)
 
 	parseErr := r.ParseMultipartForm(10 << 20) // Maximum 10 MB
 	if parseErr != nil {
@@ -33,8 +32,8 @@ func SaveUploadedImage(r *http.Request, tmpDir string) (string, error) {
 	if fromErr != nil {
 		return "", fmt.Errorf("r.FormFile() failed: %w", fromErr)
 	}
-	log.Printf("content-type: %s", header.Header.Get("Content-Type"))
-	log.Printf("file size: %d", header.Size)
+	logging.Debugf("content-type: %s", header.Header.Get("Content-Type"))
+	logging.Debugf("file size: %d", header.Size)
 
 	defer file.Close()
 
@@ -64,7 +63,7 @@ func SaveUploadedImage(r *http.Request, tmpDir string) (string, error) {
 	if copyErr != nil {
 		return "", fmt.Errorf("io.Copy() failed: %w", copyErr)
 	}
-	log.Printf("written: %d", written)
+	logging.Debugf("written: %d", written)
 
 	return tmpPath, nil
 }
@@ -101,19 +100,19 @@ func LoadConfig() (*configs.Config, error) {
 }
 
 func StartServer(config *configs.Config) {
-	log.Println("starting server...")
+	fmt.Println("starting server...")
 
-	logging.Printf("creating dir: %s to store uploaded receipts\n", config.UploadedDir)
+	fmt.Printf("creating dir: %s to store uploaded receipts\n", config.UploadedDir)
 	tmpErr := os.MkdirAll(config.UploadedDir, 0755)
 	if tmpErr != nil {
-		logging.Printf("failed to start server, err: %s", tmpErr.Error())
+		fmt.Printf("failed to start server, err: %s", tmpErr.Error())
 		return
 	}
 
-	logging.Printf("creating dir: %s to store generated images of receipts\n", config.GeneratedDir)
+	fmt.Printf("creating dir: %s to store generated images of receipts\n", config.GeneratedDir)
 	imagesErr := os.MkdirAll(config.GeneratedDir, 0755)
 	if imagesErr != nil {
-		logging.Printf("failed to start server, err: %s", imagesErr.Error())
+		fmt.Printf("failed to start server, err: %s", imagesErr.Error())
 		return
 	}
 
@@ -127,8 +126,8 @@ func StartServer(config *configs.Config) {
 		middlewares.Auth(http.HandlerFunc(handlers.DownloadReceipt(config, imagesService))),
 	)
 
-	logging.Printf("Starting server on %s", constants.PORT)
+	fmt.Printf("Starting server on %s", constants.PORT)
 	if err := http.ListenAndServe(constants.PORT, nil); err != nil {
-		logging.Println("Error starting server:", err)
+		fmt.Println("Error starting server:", err)
 	}
 }

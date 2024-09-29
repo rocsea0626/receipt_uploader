@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"receipt_uploader/constants"
+	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/http_responses"
 	"regexp"
 	"strconv"
@@ -54,10 +54,10 @@ func SendImageDownloadResponse(w http.ResponseWriter, fileName string, fileBytes
 }
 
 func ValidateGetImageRequest(r *http.Request) (string, string, error) {
-	log.Println("r.URL.Path: ", r.URL.Path)
+	logging.Debugf("r.URL.Path: %s", r.URL.Path)
 
 	receiptID := strings.TrimPrefix(r.URL.Path, "/receipts/")
-	log.Println("receiptID: ", receiptID)
+	logging.Debugf("receiptID: %s", receiptID)
 
 	re := regexp.MustCompile(`^[a-z0-9]+$`)
 	if !re.MatchString(receiptID) {

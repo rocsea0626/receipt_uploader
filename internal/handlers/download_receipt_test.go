@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"receipt_uploader/internal/images"
 	images_mock "receipt_uploader/internal/images/mock"
+	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/test_utils"
 	"testing"
@@ -37,7 +37,8 @@ func TestDownloadReceiptHandler(t *testing.T) {
 		assert.Nil(t, createErr)
 
 		url := "/receipts/" + receiptId + "?size=small"
-		log.Printf("url: %s", url)
+		logging.Debugf("url: %s", url)
+
 		req, reqErr := http.NewRequest(http.MethodGet, url, nil)
 		assert.Nil(t, reqErr)
 
@@ -105,9 +106,7 @@ func TestDownloadReceiptHandler(t *testing.T) {
 		mockConfig := configs.Config{
 			GeneratedDir: "mock_get_image_failed",
 		}
-		mockImagesService := images_mock.ServiceMock{
-			Config: &mockConfig,
-		}
+		mockImagesService := images_mock.ServiceMock{}
 
 		receiptId := "mockgetimagefailed"
 		size := "medium"

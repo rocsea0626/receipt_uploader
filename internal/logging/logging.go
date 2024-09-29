@@ -2,37 +2,23 @@ package logging
 
 import (
 	"fmt"
-	"io"
 	"log"
-	"os"
 	"sync"
 )
 
 type LogLevel int
 
 const (
-	DEBUG LogLevel = iota
-	INFO
-	WARN
-	ERROR
+	DEBUG_LEVEL LogLevel = iota
+	INFO_LEVEL
+	WARN_LEVEL
+	ERROR_LEVEL
 )
-
-type Logger struct {
-	logger *log.Logger
-}
 
 var (
-	globalLevel LogLevel
+	globalLevel = INFO_LEVEL
 	mu          sync.Mutex
 )
-
-var logger = NewLogger(INFO, os.Stdout)
-
-func NewLogger(level LogLevel, output io.Writer) *Logger {
-	return &Logger{
-		logger: log.New(output, "", log.LstdFlags),
-	}
-}
 
 func SetGlobalLevel(level LogLevel) {
 	mu.Lock()
@@ -41,30 +27,22 @@ func SetGlobalLevel(level LogLevel) {
 }
 
 func Debugf(format string, args ...interface{}) {
-	logger.logMessage(DEBUG, format, args...)
+	logMessage(DEBUG_LEVEL, format, args...)
 }
 
 func Infof(format string, args ...interface{}) {
-	logger.logMessage(INFO, format, args...)
+	logMessage(INFO_LEVEL, format, args...)
 }
 
 func Warnf(format string, args ...interface{}) {
-	logger.logMessage(WARN, format, args...)
+	logMessage(WARN_LEVEL, format, args...)
 }
 
 func Errorf(format string, args ...interface{}) {
-	logger.logMessage(ERROR, format, args...)
+	logMessage(ERROR_LEVEL, format, args...)
 }
 
-func Printf(format string, args ...interface{}) {
-	fmt.Printf(format, args...)
-}
-
-func Println(a ...any) {
-	fmt.Println(a...)
-}
-
-func (l *Logger) logMessage(level LogLevel, format string, args ...interface{}) {
+func logMessage(level LogLevel, format string, args ...interface{}) {
 	message := fmt.Sprintf(format, args...)
 	mu.Lock()
 	defer mu.Unlock()
@@ -72,16 +50,16 @@ func (l *Logger) logMessage(level LogLevel, format string, args ...interface{}) 
 	if level >= globalLevel {
 		var levelStr string
 		switch level {
-		case DEBUG:
+		case DEBUG_LEVEL:
 			levelStr = "DEBUG"
-		case INFO:
+		case INFO_LEVEL:
 			levelStr = "INFO"
-		case WARN:
+		case WARN_LEVEL:
 			levelStr = "WARN"
-		case ERROR:
+		case ERROR_LEVEL:
 			levelStr = "ERROR"
 		}
 
-		l.logger.Printf("[%s] %s\n", levelStr, message)
+		log.Printf("[%s] %s\n", levelStr, message)
 	}
 }
