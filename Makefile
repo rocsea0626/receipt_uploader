@@ -1,18 +1,15 @@
-.PHONY: start start-dev dev build build-dev test test-verbose submit
+.PHONY: run dev-run build build-dev test test-verbose submit stress-test
 
-# UNIT_TEST=go test -coverpkg=./... -coverprofile=coverage.out ./internal/utils/... ./internal/http_utils/... ./internal/images/... ./internal/handlers/... ./internal/middlewares/...
 UNIT_TEST=go test -coverpkg=./... -coverprofile=coverage.out ./internal/.../...
-INTEG_TEST=go test ./
+INTEG_TEST=go test ./main_test.go
+STRESS_TEST=go test ./stress_test.go
 VERBOSE=-v
 
-start:
+run:
 	go run ./main.go
 
-start-dev:
-	go run ./main.go
-
-dev:
-	go run ./main.go
+dev-run:
+	env=dev go run ./main.go
 
 build:
 	go build -o bin/server ./main.go
@@ -45,6 +42,9 @@ test-verbose:
 	make unit-test-verbose
 	@echo "running integration test in verbose mode..."
 	make integ-test-verbose
+
+stress-test:
+	$(STRESS_TEST) $(VERBOSE)
 
 clean:
 	- rm -rf images

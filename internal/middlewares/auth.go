@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"net/http"
-	"receipt_uploader/constants"
+	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/http_utils"
 	"receipt_uploader/internal/models/http_responses"
 	"regexp"

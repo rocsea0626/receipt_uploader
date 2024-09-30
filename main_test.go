@@ -7,8 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"receipt_uploader/constants"
-	"receipt_uploader/internal/http_utils"
+	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
@@ -27,6 +26,7 @@ func TestMain(t *testing.T) {
 		ResizedDir: filepath.Join(baseDir, "resized"),
 		UploadsDir: filepath.Join(baseDir, "uploads"),
 		Dimensions: configs.AllowedDimensions,
+		Interval:   time.Duration(1) * time.Second,
 	}
 	baseUrl := "http://localhost" + config.Port
 	url := baseUrl + "/receipts"
@@ -66,7 +66,7 @@ func TestMain(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
 		var uploadResp http_responses.UploadResponse
-		http_utils.ParseResponseBody(t, resp, &uploadResp)
+		test_utils.ParseResponseBody(t, resp, &uploadResp)
 		assert.NotEmpty(t, uploadResp.ReceiptID)
 	})
 
@@ -85,7 +85,7 @@ func TestMain(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		var errorResp http_responses.ErrorResponse
-		http_utils.ParseResponseBody(t, resp, &errorResp)
+		test_utils.ParseResponseBody(t, resp, &errorResp)
 		assert.Equal(t, constants.HTTP_ERR_MSG_400, errorResp.Error)
 	})
 
@@ -122,7 +122,7 @@ func TestMain(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
 		var uploadResp http_responses.UploadResponse
-		http_utils.ParseResponseBody(t, resp, &uploadResp)
+		test_utils.ParseResponseBody(t, resp, &uploadResp)
 		assert.NotEmpty(t, uploadResp.ReceiptID)
 
 		time.Sleep(5 * time.Second) // wait uploaded image to be resized
@@ -138,9 +138,9 @@ func TestMain(t *testing.T) {
 		defer getResp.Body.Close()
 
 		assert.Equal(t, http.StatusOK, getResp.StatusCode)
-		header, headerErr := http_utils.ParseDownloadResponseHeader(getResp)
+		header, headerErr := test_utils.ParseDownloadResponseHeader(getResp)
 		assert.Nil(t, headerErr)
-		assert.Equal(t, "application/octet-stream", header.ContentType)
+		assert.Equal(t, "image/jpeg", header.ContentType)
 
 		fileName := uploadResp.ReceiptID + "_" + size + ".jpg"
 		assert.Equal(t, fileName, header.Filename)
@@ -168,7 +168,7 @@ func TestMain(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
 		var uploadResp http_responses.UploadResponse
-		http_utils.ParseResponseBody(t, resp, &uploadResp)
+		test_utils.ParseResponseBody(t, resp, &uploadResp)
 		assert.NotEmpty(t, uploadResp.ReceiptID)
 
 		time.Sleep(5 * time.Second) // wait uploaded image to be resized
@@ -184,9 +184,9 @@ func TestMain(t *testing.T) {
 		defer getResp.Body.Close()
 
 		assert.Equal(t, http.StatusOK, getResp.StatusCode)
-		header, headerErr := http_utils.ParseDownloadResponseHeader(getResp)
+		header, headerErr := test_utils.ParseDownloadResponseHeader(getResp)
 		assert.Nil(t, headerErr)
-		assert.Equal(t, "application/octet-stream", header.ContentType)
+		assert.Equal(t, "image/jpeg", header.ContentType)
 
 		fileName := uploadResp.ReceiptID + ".jpg"
 		assert.Equal(t, fileName, header.Filename)

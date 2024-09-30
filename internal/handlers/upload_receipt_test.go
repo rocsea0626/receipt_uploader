@@ -64,26 +64,6 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, status)
 	})
 
-	// t.Run("should fail, GenerateImages() failed", func(t *testing.T) {
-	// 	mockConfig := configs.Config{
-	// 		ImagesDir: "mock_generate_images_failed",
-	// 	}
-	// 	mockImagesService := images_mock.ServiceMock{}
-
-	// 	req, reqErr := http.NewRequest(http.MethodPost, "/receipts", nil)
-	// 	assert.Nil(t, reqErr)
-
-	// 	rr := httptest.NewRecorder()
-	// 	handler := UploadReceipt(&mockConfig, &mockImagesService)
-
-	// 	handler.ServeHTTP(rr, req)
-
-	// 	status := rr.Code
-	// 	body := rr.Body.String()
-	// 	assert.Equal(t, http.StatusInternalServerError, status)
-	// 	assert.Contains(t, body, constants.HTTP_ERR_MSG_500)
-	// })
-
 	t.Run("should fail, not allowed method", func(t *testing.T) {
 		req, reqErr := http.NewRequest(http.MethodDelete, "/receipts", nil)
 		assert.Nil(t, reqErr)

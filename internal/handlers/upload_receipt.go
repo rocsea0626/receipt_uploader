@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"net/http"
-	"receipt_uploader/constants"
+	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/http_utils"
 	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/logging"
@@ -12,7 +12,7 @@ import (
 
 func UploadReceipt(config *configs.Config, imagesService images.ServiceType) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		logging.Debugf("r.Method: %s", r.Method)
+		logging.Infof("received request, %s, %s", r.Method, r.URL.Path)
 
 		if http.MethodPost != r.Method {
 			resp := http_responses.ErrorResponse{
@@ -49,6 +49,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		http_utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
 		return
 	}
+	logging.Infof("image save to path: %s", imgFile.Path)
 
 	receiptID := imgFile.ReceiptID
 	resp := http_responses.UploadResponse{

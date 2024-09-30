@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 	"os"
-	"receipt_uploader/constants"
+	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/http_utils"
 	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/logging"
@@ -14,7 +14,8 @@ import (
 
 func DownloadReceipt(config *configs.Config, imagesService images.ServiceType) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		logging.Debugf("r.Method: %s", r.Method)
+		logging.Infof("received request, %s, %s", r.Method, r.URL.Path)
+
 		if http.MethodGet != r.Method {
 			resp := http_responses.ErrorResponse{
 				Error: constants.HTTP_ERR_MSG_405,
@@ -41,8 +42,8 @@ func handleGet(w http.ResponseWriter, r *http.Request, config *configs.Config, i
 		return
 	}
 
-	imageFile := image_meta.FromGetRequset(receiptId, size, username, config.ResizedDir)
-	fileBytes, fileName, getErr := imagesService.GetImage(imageFile)
+	imageMeta := image_meta.FromGetRequset(receiptId, size, username, config.ResizedDir)
+	fileBytes, fileName, getErr := imagesService.GetImage(imageMeta)
 	if getErr != nil {
 		logging.Errorf("images.GetImage() failed, err: %s", getErr.Error())
 		if os.IsNotExist(getErr) {
@@ -58,5 +59,6 @@ func handleGet(w http.ResponseWriter, r *http.Request, config *configs.Config, i
 		return
 	}
 
+	logging.Infof("response with image: %s", imageMeta.FileName)
 	http_utils.SendImageDownloadResponse(w, fileName, &fileBytes)
 }

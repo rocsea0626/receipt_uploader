@@ -14,8 +14,8 @@ func (s *ServiceMock) ParseImage(r *http.Request) ([]byte, error) {
 	return nil, nil
 }
 
-func (s *ServiceMock) GenerateResizedImages(imageFile *image_meta.ImageMeta, destDir string) error {
-	log.Printf("images_mock.GenerateResizedImages(srcPath: %s)", imageFile.Path)
+func (s *ServiceMock) GenerateResizedImages(imageMeta *image_meta.ImageMeta, destDir string) error {
+	log.Printf("images_mock.GenerateResizedImages(srcPath: %s)", imageMeta.Path)
 
 	if destDir == "mock_generate_images_failed" {
 		return errors.New("mock GenerateResizedImages() failed")
@@ -28,9 +28,9 @@ func (s *ServiceMock) SaveUpload(bytes *[]byte, username, destDir string) (*imag
 	return nil, nil
 }
 
-func (s *ServiceMock) GetImage(imageFile *image_meta.ImageMeta) ([]byte, string, error) {
-	log.Printf("images_mock.GetImage(receiptId: %s)", imageFile.ReceiptID)
-	if imageFile.ReceiptID == "mockgetimagefailed" {
+func (s *ServiceMock) GetImage(imageMeta *image_meta.ImageMeta) ([]byte, string, error) {
+	log.Printf("images_mock.GetImage(receiptId: %s)", imageMeta.ReceiptID)
+	if imageMeta.ReceiptID == "mockgetimagefailed" {
 		return nil, "", errors.New("mock GetImage() failed")
 	}
 	return nil, "", nil

@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"receipt_uploader/constants"
+	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/image_meta"
@@ -28,7 +28,7 @@ func NewService(d *configs.Dimensions) ServiceType {
 }
 
 func (s *Service) GenerateResizedImages(imageMeta *image_meta.ImageMeta, destDir string) error {
-	logging.Debugf("GenerateResizedImages(srcPath: %s, destDir: %s)", imageMeta.Path, destDir)
+	logging.Infof("GenerateResizedImages(srcPath: %s, destDir: %s)", imageMeta.Path, destDir)
 
 	fileBytes, readErr := os.ReadFile(imageMeta.Path)
 	if readErr != nil {
