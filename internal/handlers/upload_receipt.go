@@ -39,6 +39,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		http_utils.SendErrorResponse(w, &resp, http.StatusBadRequest)
 		return
 	}
+	logging.Debugf("len(bytes): %d", len(bytes))
 
 	imgFile, saveErr := imagesService.SaveUpload(&bytes, username, config.UploadsDir)
 	if saveErr != nil {

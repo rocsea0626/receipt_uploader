@@ -8,6 +8,7 @@ import (
 	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
+	"receipt_uploader/internal/models/http_requests"
 	"receipt_uploader/internal/models/http_responses"
 	"receipt_uploader/internal/models/image_meta"
 )
@@ -30,11 +31,10 @@ func DownloadReceipt(config *configs.Config, imagesService images.ServiceType) h
 
 func handleGet(w http.ResponseWriter, r *http.Request, config *configs.Config, imagesService images.ServiceType) {
 	logging.Debugf("handleGet(), path: %s", r.URL.Path)
-	username := r.Header.Get("username_token")
 
-	receiptId, size, validateErr := http_utils.ValidateGetImageRequest(r, &config.Dimensions)
-	if validateErr != nil {
-		logging.Errorf("http_utils.ValidateGetImageRequest() failed, err: %s", validateErr.Error())
+	downloadReq, parseErr := http_requests.ParseDownloadRequest(r, &config.Dimensions)
+	if parseErr != nil {
+		logging.Errorf("http_requests.ParseDownloadRequest() failed, err: %s", parseErr.Error())
 		resp := http_responses.ErrorResponse{
 			Error: constants.HTTP_ERR_MSG_400,
 		}
@@ -42,7 +42,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, config *configs.Config, i
 		return
 	}
 
-	imageMeta := image_meta.FromGetRequset(receiptId, size, username, config.ResizedDir)
+	imageMeta := image_meta.FromGetRequset(downloadReq.ReceiptId, downloadReq.Size, downloadReq.Username, config.ResizedDir)
 	fileBytes, fileName, getErr := imagesService.GetImage(imageMeta)
 	if getErr != nil {
 		logging.Errorf("images.GetImage() failed, err: %s", getErr.Error())

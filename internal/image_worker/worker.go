@@ -49,6 +49,22 @@ func (s *Service) ResizeImages(srcDir, destDir string) error {
 	return nil
 }
 
+// getFile scans the specified directory for files and returns the name of the first file found.
+//
+// Parameters:
+//   - dir: A string representing the path to the directory to be scanned.
+//
+// Returns:
+//   - A string containing the name of the first file found in the directory.
+//   - An error indicating any problems encountered while reading the directory.
+//
+// Example:
+//
+//	fileName, err := getFile("/path/to/directory")
+//	if err != nil {
+//	    log.Fatalf("Error: %v", err)
+//	}
+//	fmt.Printf("Found file: %s\n", fileName)
 func getFile(dir string) (string, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {

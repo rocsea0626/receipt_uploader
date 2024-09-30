@@ -1,4 +1,4 @@
-# LARVIS Poker
+# Receipt Uploader
 This project provides an image uploader service for receipt scanning, enabling users to upload photos of their receipts, store them in different resolutions/sizes, and download them in an appropriate size. Both original and resized images are stored by the system.
 
 
@@ -15,19 +15,19 @@ go mod download
 make run # run server in release mode
 make dev-run # run server in debug mode
 
-# Upload a receipt
+# Example request to uplaod a receipt
 curl -X POST http://localhost:8080/receipts \                                                                     
 -F "receipt=@test_image.jpg" \
 -H "username_token: token_guo"
 
-# Download original image
+# Example request to download original image
 curl -H "username_token: token_guo" -o download.jpg http://localhost:8080/receipts/{receipId}
 response: 
 {
   "receiptId": "4179e13020ad43bab4d8867338f0f048"
 }
 
-# Download small size image
+# Example request to download small size image
 curl -H "username_token: token_guo" -o download-small.jpg http://localhost:8080/receipts/{receipId}?size=small
 ```
 
@@ -35,7 +35,7 @@ curl -H "username_token: token_guo" -o download-small.jpg http://localhost:8080/
 All requests must have `username_token` attached in the header. All images are stored under `receipts` folder.
 
 ### Uploading of receipt
-  - Handled by request of `POST /receipts`
+  - Endpoint: Handled by request of `POST /receipts`
   - Each original upload of receipts is stored under `receipts/config.UPLOADS_DIR/` folder, named as `username#uuid.jpg`
   - A `201` response is immediately sent to client once receipt is stored at server so that user does not need to wait for resizing to complete
 
@@ -87,7 +87,8 @@ All requests must have `username_token` attached in the header. All images are s
 ```
 | Error code | Error case                                 |
 |------------|--------------------------------------------|
-| 400        | invalid input, size=xl                     |
+| 400        | invalid query parameter value, ?size=xl                     |
+| 400        | invalid query parameter key, ?resolution=small                     |
 | 404        | not found, access control failed or not found           |
 | 405        | not allowed method to a endpoint           |
 | 500        | internal server error                      |
@@ -110,6 +111,7 @@ Each user token can only contain lowercase letters, digits, and underscores. Val
 ```
 
 ## Testing
+Temporary files will be created then deleted when running all tests:
 - unit test: all unit test cases are defined within each module's folder.
 - integration test: defined in `main_test.go` and it starts a server on localhost.
 - stress test: defined in `stress_test.go` and multiple requests are send to server at same and it starts a server on localhost.
@@ -133,6 +135,7 @@ Each user token can only contain lowercase letters, digits, and underscores. Val
 │   │   ├── http_utils.go
 │   │   └── http_utils_test.go
 │   ├── image_worker
+│   │   ├── mock_generate_images_failed
 │   │   ├── types.go
 │   │   ├── worker.go
 │   │   └── worker_test.go
@@ -151,6 +154,7 @@ Each user token can only contain lowercase letters, digits, and underscores. Val
 │   │   ├── configs
 │   │   │   └── configs.go
 │   │   ├── http_requests
+│   │   │   └── http_requests.go
 │   │   ├── http_responses
 │   │   │   └── http_responses.go
 │   │   └── image_meta
@@ -170,12 +174,12 @@ Each user token can only contain lowercase letters, digits, and underscores. Val
 - `main.go` is entry point of application
 - `main_test.go` defines all integration test cases
 - `stress_test.go` defines all stress test cases
+- `test_image.jpg` test image used in stress test
 - `internal/handlers/` contains definition handler for each endpoint
 - `internal/http_utils/` contains definition utility functions for http request
 - `internal/image_worker/` contains definition of image_worker which keeping running in backgroud all the time
 - `internal/utils/` contains definition utility functions
-- `internal/images/` contains definition images service
-- 
+- `internal/images/` contains definition images service, logics of image resizing are defined here
 
 ## Implementation concerns:
 

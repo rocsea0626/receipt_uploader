@@ -76,7 +76,7 @@ func TestMainStess(t *testing.T) {
 		}
 		wg.Wait()
 
-		logging.Infof("waiting %d s for server completes resizing of images...", waitTime)
+		logging.Infof("waiting %d s for server completes resizing of all uploaded images...", waitTime)
 		time.Sleep(time.Duration(waitTime) * time.Second)
 
 		size := "small"

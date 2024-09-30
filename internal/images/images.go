@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
+	"receipt_uploader/internal/models/http_requests"
 	"receipt_uploader/internal/models/image_meta"
 
 	"github.com/nfnt/resize"
@@ -27,6 +27,37 @@ func NewService(d *configs.Dimensions) ServiceType {
 	}
 }
 
+// GenerateResizedImages generates resized versions of an image based on
+// specified dimensions and saves them to a given destination directory.
+//
+// This method reads the original image file specified by imageMeta.Path,
+// creates a directory structure for the specified username, and then
+// generates resized images according to predefined dimensions.
+// The resized images are saved in the destination directory.
+//
+// Parameters:
+//   - imageMeta: A pointer to an image_meta.ImageMeta struct that contains
+//     metadata about the image, including its path and associated username.
+//   - destDir: A string representing the base directory where the resized
+//     images will be saved, organized under the user's name.
+//
+// Returns:
+//   - An error if any of the following operations fail:
+//
+// Example:
+//
+//	func main() {
+//	    service := &Service{}
+//	    imageMeta := &image_meta.ImageMeta{
+//	        Path: "path/to/original/image.jpg",
+//	        Username: "john_doe",
+//	    }
+//	    err := service.GenerateResizedImages(imageMeta, "path/to/destination")
+//	    if err != nil {
+//	        log.Fatalf("Error generating resized images: %v", err)
+//	    }
+//	    log.Println("Resized images generated successfully.")
+//	}
 func (s *Service) GenerateResizedImages(imageMeta *image_meta.ImageMeta, destDir string) error {
 	logging.Infof("GenerateResizedImages(srcPath: %s, destDir: %s)", imageMeta.Path, destDir)
 
@@ -75,25 +106,54 @@ func (s *Service) GenerateResizedImages(imageMeta *image_meta.ImageMeta, destDir
 	return nil
 }
 
+// ParseImage processes an HTTP request to extract and validate an uploaded image file.
+//
+// This method parses a multipart form from the incoming HTTP request and attempts to
+// retrieve the file associated with the form field named "receipt". It validates the
+// content type, image format, and dimensions of the image based on predefined constants.
+//
+// The function performs the following tasks:
+// - Parses the incoming multipart form data with a specified maximum upload size.
+// - Retrieves the uploaded file from the form.
+// - Reads the file's content and decodes it to check if it is a valid image.
+// - Validates the image format to ensure it is a JPEG image.
+// - Validates the dimensions of the image against specified minimum width and height.
+//
+// Parameters:
+//   - r: A pointer to an http.Request that contains the uploaded image
+//     in a multipart form data format.
+//
+// Returns:
+//   - A byte slice containing the raw image data if successful.
+//   - An error if any of the following fail:
+//
+// Example:
+//
+//	func handler(w http.ResponseWriter, r *http.Request) {
+//	    service := &Service{}
+//	    imgData, err := service.ParseImage(r)
+//	    if err != nil {
+//	        http.Error(w, err.Error(), http.StatusBadRequest)
+//	        return
+//	    }
+//	    // Process imgData as needed
+//	}
 func (s *Service) ParseImage(r *http.Request) ([]byte, error) {
 	parseErr := r.ParseMultipartForm(constants.MAX_UPLOAD_SIZE)
 	if parseErr != nil {
 		return nil, fmt.Errorf("r.ParseMultipartForm() failed, err: %s", parseErr.Error())
 	}
-
-	file, header, fromErr := r.FormFile("receipt")
-	if fromErr != nil {
-		return nil, fmt.Errorf("r.FormFile() failed: %w", fromErr)
-	}
-	logging.Debugf("content-type: %s", header.Header.Get("Content-Type"))
-	defer file.Close()
-
-	fileBytes, err := io.ReadAll(file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read file: %w", err)
+	uploadRequest, reqErr := http_requests.ParseUploadRequest(r)
+	if reqErr != nil {
+		return nil, fmt.Errorf("http_requests.FromRequest() failed: %w", reqErr)
 	}
 
-	img, format, decodeErr := image.Decode(bytes.NewReader(fileBytes))
+	payloadSize := int64(len(uploadRequest.Payload))
+	if payloadSize > constants.MAX_UPLOAD_SIZE {
+		return nil, fmt.Errorf("image size is too big, payloadSize=%d", payloadSize)
+	}
+
+	img, format, decodeErr := image.Decode(bytes.NewReader(uploadRequest.Payload))
 	if decodeErr != nil {
 		return nil, fmt.Errorf("image.Decode() failed, err: %s", decodeErr.Error())
 	}
@@ -105,7 +165,7 @@ func (s *Service) ParseImage(r *http.Request) ([]byte, error) {
 		return nil, fmt.Errorf("invalid image format, format=%s, only jpeg format is allowed", format)
 	}
 
-	return fileBytes, nil
+	return uploadRequest.Payload, nil
 }
 
 func (s *Service) SaveUpload(bytes *[]byte, username, uploadDir string) (*image_meta.ImageMeta, error) {

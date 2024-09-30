@@ -17,25 +17,55 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/exp/rand"
 )
 
-func CreateTestImage(filePath string, width, height int) error {
-	logging.Debugf("CreateTestImage(filePath: %s, w: %d, h: %d)", filePath, width, height)
+// func CreateTestImage(filePath string, width, height int) error {
+// 	logging.Debugf("CreateTestImage(filePath: %s, w: %d, h: %d)", filePath, width, height)
 
+// 	img := image.NewRGBA(image.Rect(0, 0, width, height))
+// 	for x := 0; x < img.Bounds().Dx(); x++ {
+// 		for y := 0; y < img.Bounds().Dy(); y++ {
+// 			img.Set(x, y, color.RGBA{uint8(x % 256), uint8(y % 256), 255, 255})
+// 		}
+// 	}
+// 	out, err := os.Create(filePath)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer out.Close()
+// 	return jpeg.Encode(out, img, nil)
+// }
+
+func CreateTestImage(filePath string, width, height int) error {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	for x := 0; x < img.Bounds().Dx(); x++ {
-		for y := 0; y < img.Bounds().Dy(); y++ {
-			img.Set(x, y, color.RGBA{uint8(x % 256), uint8(y % 256), 0, 255})
+
+	rand.Seed(uint64(time.Now().UnixNano()))
+
+	for x := 0; x < width; x++ {
+		for y := 0; y < height; y++ {
+			img.Set(x, y, color.RGBA{
+				uint8(rand.Intn(256)),
+				uint8(rand.Intn(256)),
+				uint8(rand.Intn(256)),
+				255,
+			})
 		}
 	}
+
 	out, err := os.Create(filePath)
 	if err != nil {
 		return err
 	}
 	defer out.Close()
-	return jpeg.Encode(out, img, nil)
+
+	opts := jpeg.Options{
+		Quality: 95,
+	}
+	return jpeg.Encode(out, img, &opts)
 }
 
 func GenerateUploadRequest(t *testing.T, url string, fileName, userToken string) (*http.Request, error) {

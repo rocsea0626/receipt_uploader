@@ -65,15 +65,6 @@ func TestValidateGetImageRequest(t *testing.T) {
 		assert.Equal(t, "", size)
 	})
 
-	t.Run("should fail, missing path", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "http://example.com/receipts?size=small", nil)
-		receiptID, size, err := http_utils.ValidateGetImageRequest(req, &configs.AllowedDimensions)
-
-		assert.NotNil(t, err)
-		assert.Equal(t, "", receiptID)
-		assert.Equal(t, "", size)
-	})
-
 	t.Run("should fail, invalid size parameter", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "http://example.com/receipts/10293?size=extra-large", nil)
 		receiptID, size, err := http_utils.ValidateGetImageRequest(req, &configs.AllowedDimensions)
@@ -82,16 +73,6 @@ func TestValidateGetImageRequest(t *testing.T) {
 		assert.Equal(t, "", receiptID)
 		assert.Equal(t, "", size)
 
-	})
-
-	t.Run("should fail, missing size parameter", func(t *testing.T) {
-		t.Skip()
-		req := httptest.NewRequest("GET", "http://example.com/receipts/45678?size=", nil)
-		receiptID, size, err := http_utils.ValidateGetImageRequest(req, &configs.AllowedDimensions)
-
-		assert.NotNil(t, err)
-		assert.Equal(t, "", receiptID)
-		assert.Equal(t, "", size)
 	})
 
 	t.Run("should fail, invalid query parameter", func(t *testing.T) {
@@ -132,6 +113,15 @@ func TestValidateGetImageRequest(t *testing.T) {
 
 	t.Run("should fail, case sensitive, size=Small", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "http://example.com/receipts/45678?size=Small", nil)
+		receiptID, size, err := http_utils.ValidateGetImageRequest(req, &configs.AllowedDimensions)
+
+		assert.NotNil(t, err)
+		assert.Equal(t, "", receiptID)
+		assert.Equal(t, "", size)
+	})
+
+	t.Run("should fail, case sensitive, uuid=A45678", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "http://example.com/receipts/A45678å?size=Small", nil)
 		receiptID, size, err := http_utils.ValidateGetImageRequest(req, &configs.AllowedDimensions)
 
 		assert.NotNil(t, err)
