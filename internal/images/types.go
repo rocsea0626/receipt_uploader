@@ -1,10 +1,13 @@
 package images
 
-import "net/http"
+import (
+	"net/http"
+	"receipt_uploader/internal/models/image_meta"
+)
 
 type ServiceType interface {
-	GenerateResizedImages(srcPath, destDir string) error
-	SaveUpload(bytes *[]byte, destDir string) (string, error)
+	GenerateResizedImages(imageMeta *image_meta.ImageMeta, destDir string) error
+	SaveUpload(bytes *[]byte, username, destDir string) (*image_meta.ImageMeta, error)
 	ParseImage(r *http.Request) ([]byte, error)
-	GetImage(receiptId, size, srcDir string) ([]byte, string, error)
+	GetImage(imageMeta *image_meta.ImageMeta) ([]byte, string, error)
 }

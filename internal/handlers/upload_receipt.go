@@ -2,14 +2,12 @@ package handlers
 
 import (
 	"net/http"
-	"path/filepath"
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/http_utils"
 	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
-	"receipt_uploader/internal/utils"
 )
 
 func UploadReceipt(config *configs.Config, imagesService images.ServiceType) http.HandlerFunc {
@@ -34,7 +32,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 
 	bytes, decodeErr := imagesService.ParseImage(r)
 	if decodeErr != nil {
-		logging.Debugf("http_utils.DecodeImage() failed, err: %s", decodeErr.Error())
+		logging.Debugf("imagesService.ParseImage() failed, err: %s", decodeErr.Error())
 		resp := http_responses.ErrorResponse{
 			Error: constants.HTTP_ERR_MSG_400,
 		}
@@ -42,7 +40,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		return
 	}
 
-	orgFilePath, saveErr := imagesService.SaveUpload(&bytes, config.UploadsDir)
+	imgFile, saveErr := imagesService.SaveUpload(&bytes, username, config.UploadsDir)
 	if saveErr != nil {
 		logging.Errorf("utils.SaveUpload() failed, err: %s", saveErr.Error())
 		resp := http_responses.ErrorResponse{
@@ -52,18 +50,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		return
 	}
 
-	destDir := filepath.Join(config.ImagesDir, username)
-	genErr := imagesService.GenerateResizedImages(orgFilePath, destDir)
-	if genErr != nil {
-		logging.Errorf("images.GenerateImages() failed, err: %s", genErr.Error())
-		resp := http_responses.ErrorResponse{
-			Error: constants.HTTP_ERR_MSG_500,
-		}
-		http_utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
-		return
-	}
-
-	receiptID := utils.ExtractFileName(orgFilePath)
+	receiptID := imgFile.ReceiptID
 	resp := http_responses.UploadResponse{
 		ReceiptID: receiptID,
 	}

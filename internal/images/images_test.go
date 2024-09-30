@@ -6,19 +6,24 @@ import (
 	"os"
 	"path/filepath"
 	"receipt_uploader/internal/models/configs"
+	"receipt_uploader/internal/models/image_meta"
 	"receipt_uploader/internal/test_utils"
-	"receipt_uploader/internal/utils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGenerateImages(t *testing.T) {
-	srcPath := "./test.jpg"
-	destDir := "./output/"
+	baseDir := "test-gen-images"
+	uploadDir := filepath.Join(baseDir, "uploads")
+	username := "user1"
+	filaname := username + "#test.jpg"
+	srcPath := filepath.Join(uploadDir, filaname)
+	destDir := filepath.Join(baseDir, "resized")
 
+	os.MkdirAll(uploadDir, 0755)
 	os.MkdirAll(destDir, 0755)
-	defer os.RemoveAll(destDir)
+	defer os.RemoveAll(baseDir)
 
 	service := NewService(&configs.AllowedDimensions)
 
@@ -26,12 +31,17 @@ func TestGenerateImages(t *testing.T) {
 		createErr := test_utils.CreateTestImage(srcPath, 800, 1200)
 		assert.Nil(t, createErr)
 
-		genErr := service.GenerateResizedImages(srcPath, destDir)
-		assert.Nil(t, genErr)
+		imageMeta, imageErr := image_meta.FromUploadDir(srcPath)
+		assert.Nil(t, imageErr)
 
-		smallImagePath := utils.GenerateDestPath(srcPath, destDir, "small")
-		mediumImagePath := utils.GenerateDestPath(srcPath, destDir, "medium")
-		largeImagePath := utils.GenerateDestPath(srcPath, destDir, "large")
+		genErr := service.GenerateResizedImages(imageMeta, destDir)
+		assert.Nil(t, genErr)
+		imgFile, imgErr := image_meta.FromUploadDir(srcPath)
+		assert.Nil(t, imgErr)
+
+		smallImagePath := image_meta.GetResizedPath(imgFile, filepath.Join(destDir, username), "small")
+		mediumImagePath := image_meta.GetResizedPath(imgFile, filepath.Join(destDir, username), "medium")
+		largeImagePath := image_meta.GetResizedPath(imgFile, filepath.Join(destDir, username), "large")
 
 		_, smallErr := os.Stat(smallImagePath)
 		assert.Nil(t, smallErr)
@@ -77,15 +87,37 @@ func TestResizeImage(t *testing.T) {
 }
 
 func TestGetImage(t *testing.T) {
-	srcDir := "./mock-get-images"
+	username := "test_user"
+	baseDir := "mock-get-images"
+	srcDir := filepath.Join(baseDir, username)
 
 	os.MkdirAll(srcDir, 0755)
-	defer os.RemoveAll(srcDir)
+	defer os.RemoveAll(baseDir)
 
 	service := NewService(&configs.AllowedDimensions)
 
+	t.Run("succeed, no size", func(t *testing.T) {
+		receiptId := "receiptId1"
+		fileName := receiptId + ".jpg"
+		fPath := filepath.Join(srcDir, fileName)
+
+		createImgErr := test_utils.CreateTestImage(fPath, 100, 100)
+		assert.Nil(t, createImgErr)
+
+		imageMeta := &image_meta.ImageMeta{
+			Path:     fPath,
+			FileName: fileName,
+		}
+
+		fileBytes, fName, getErr := service.GetImage(imageMeta)
+		assert.Nil(t, getErr)
+		assert.Greater(t, len(fileBytes), 0)
+		assert.Equal(t, fileName, fName)
+
+	})
+
 	t.Run("succeed, size=small", func(t *testing.T) {
-		receiptId := "test1get2image"
+		receiptId := "receiptId1"
 		size := "small"
 		fileName := receiptId + "_" + size + ".jpg"
 		fPath := filepath.Join(srcDir, fileName)
@@ -93,7 +125,12 @@ func TestGetImage(t *testing.T) {
 		createImgErr := test_utils.CreateTestImage(fPath, 100, 100)
 		assert.Nil(t, createImgErr)
 
-		fileBytes, fName, getErr := service.GetImage(receiptId, size, srcDir)
+		imageMeta := &image_meta.ImageMeta{
+			Path:     fPath,
+			FileName: fileName,
+		}
+
+		fileBytes, fName, getErr := service.GetImage(imageMeta)
 		assert.Nil(t, getErr)
 		assert.Greater(t, len(fileBytes), 0)
 		assert.Equal(t, fileName, fName)
@@ -101,7 +138,7 @@ func TestGetImage(t *testing.T) {
 	})
 
 	t.Run("succeed, size=large", func(t *testing.T) {
-		receiptId := "test-get-image"
+		receiptId := "receiptId1"
 		size := "large"
 		fileName := receiptId + "_" + size + ".jpg"
 		fPath := filepath.Join(srcDir, fileName)
@@ -109,7 +146,12 @@ func TestGetImage(t *testing.T) {
 		createImgErr := test_utils.CreateTestImage(fPath, 100, 100)
 		assert.Nil(t, createImgErr)
 
-		fileBytes, fName, getErr := service.GetImage(receiptId, size, srcDir)
+		imageMeta := &image_meta.ImageMeta{
+			Path:     fPath,
+			FileName: fileName,
+		}
+
+		fileBytes, fName, getErr := service.GetImage(imageMeta)
 		assert.Nil(t, getErr)
 		assert.Greater(t, len(fileBytes), 0)
 		assert.Equal(t, fileName, fName)
@@ -117,10 +159,17 @@ func TestGetImage(t *testing.T) {
 	})
 
 	t.Run("should fail, non existing file", func(t *testing.T) {
-		receiptId := "test-get-image-non-existing"
+		receiptId := "non-existing"
 		size := "large"
+		fileName := receiptId + "_" + size + ".jpg"
+		fPath := filepath.Join(srcDir, fileName)
 
-		fileBytes, fName, getErr := service.GetImage(receiptId, size, srcDir)
+		imageMeta := &image_meta.ImageMeta{
+			Path:     fPath,
+			FileName: fileName,
+		}
+
+		fileBytes, fName, getErr := service.GetImage(imageMeta)
 		assert.NotNil(t, getErr)
 		assert.ErrorIs(t, getErr, os.ErrNotExist)
 		assert.Nil(t, fileBytes)

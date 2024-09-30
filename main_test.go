@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,7 +13,9 @@ import (
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
 	"receipt_uploader/internal/test_utils"
+	"receipt_uploader/internal/utils"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -21,7 +24,7 @@ func TestMain(t *testing.T) {
 	baseDir := "integ-test-images"
 	config := &configs.Config{
 		Port:       ":8080",
-		ImagesDir:  filepath.Join(baseDir, "images"),
+		ResizedDir: filepath.Join(baseDir, "resized"),
 		UploadsDir: filepath.Join(baseDir, "uploads"),
 		Dimensions: configs.AllowedDimensions,
 	}
@@ -29,8 +32,15 @@ func TestMain(t *testing.T) {
 	url := baseUrl + "/receipts"
 	defer os.RemoveAll(baseDir)
 
-	go StartServer(config)
 	client := &http.Client{}
+
+	stopChan := make(chan struct{})
+	t.Cleanup(func() {
+		log.Println("Cleanup integration test")
+		close(stopChan)
+	})
+
+	go utils.StartServer(config, stopChan)
 
 	t.Run("return 200, /health", func(t *testing.T) {
 		resp, err := http.Get(baseUrl + "/health")
@@ -115,6 +125,8 @@ func TestMain(t *testing.T) {
 		http_utils.ParseResponseBody(t, resp, &uploadResp)
 		assert.NotEmpty(t, uploadResp.ReceiptID)
 
+		time.Sleep(5 * time.Second) // wait uploaded image to be resized
+
 		getUrl := fmt.Sprintf("%s/%s?size=%s", url, uploadResp.ReceiptID, size)
 		logging.Debugf("getUrl: %s", getUrl)
 		getReq, getReqErr := http.NewRequest(http.MethodGet, getUrl, nil)
@@ -159,6 +171,8 @@ func TestMain(t *testing.T) {
 		http_utils.ParseResponseBody(t, resp, &uploadResp)
 		assert.NotEmpty(t, uploadResp.ReceiptID)
 
+		time.Sleep(5 * time.Second) // wait uploaded image to be resized
+
 		getUrl := fmt.Sprintf("%s/%s", url, uploadResp.ReceiptID)
 		logging.Debugf("getUrl: %s", getUrl)
 		getReq, getReqErr := http.NewRequest(http.MethodGet, getUrl, nil)
@@ -184,7 +198,6 @@ func TestMain(t *testing.T) {
 	})
 
 	t.Run("return 403, GET /receipts/{receiptId}?size=large, username_token missing", func(t *testing.T) {
-
 		getUrl := fmt.Sprintf("%s/%s?size=%s", url, "fakereceiptId", "small")
 		logging.Debugf("getUrl: %s", getUrl)
 
@@ -199,7 +212,6 @@ func TestMain(t *testing.T) {
 	})
 
 	t.Run("return 403, GET /receipts/{receiptId}?size=large, token has wrong key", func(t *testing.T) {
-
 		getUrl := fmt.Sprintf("%s/%s?size=%s", url, "fakereceiptId", "small")
 		logging.Debugf("getUrl: %s", getUrl)
 

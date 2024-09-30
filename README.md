@@ -16,36 +16,40 @@ make start
 ```
 
 ## System design and specifications
-All images are stored under `images` folder. 
+All requests must have `username_token` attached in the header. All images are stored under `receipts` folder.
 
-- Uploading of receipt 
+- Uploading of receipt:
   - Handled by request of `POST /receipts`
-  - Each request must have 1 attribute in header: `username_token`
   - System does not check duplicate receipts. In reality this can be handled by `TransactionID` provided by payment service provider
-  - Original upload of receipts are stored under `images/config.DIR_UPLOAD`
-  - Converted images are stored under `images/config.DIR_GENERATED/username`
+  - Original upload of receipts are stored under `receipts/config.UPLOADS_DIR/`
+  - A `201` response is immediately sent to client once receipt is stored at server
+
+- Processing of image
+  - Each user's converted images are stored under `receipts/config.DIR_IMAGES/{username}` folder
   - Each original are converted into 3 different sizes: small, medium and large. large is the original size of uploaded receipt
   - The images will be proportionally scaled according to their original dimensions to maintain aspect ratio.
-  - All images are named with uuid without "-" and converted images are suffixed by size, i.e., small, medium, large
-- Processing of image
-  - Only sending response when storing and resizing receipts are completed. In reality, this can be optimized one job queue to store uploaded receipt and another job queue to resize images. However, it may become confusing for users. Optimization can be implemented depends on use case.
-  - Rate limiting: 
-
-
+  - A worker goroutine is kept running in background to scan `receipts/config.UPLOADS_DIR` folder and resize each uploaded receipt
+  - All images are named with uuid without "-" and converted images are suffixed by size, i.e., {uuid}_small.jpg
+  
 - Downloading of receipt 
   - To get images with different size: `GET /api/receipts/{receiptId}?size=small|medium|large`
   - To get image with original size: `GET /api/receipts/{receiptId}`
-  - Each request must have 1 attribute in header: `username_token`
-  - `size` is required, otherwise request will be rejected
+
+- Error Handling
+  - If system fails to resize image, mechanism need to be implemented to notify client
+  - System error messages are hidden from user 
+
+
+
 
 
 ## Data validatation:
 - Uploading of receipt 
-  - Maximum size of upload is 10MB and minimum resolution is 600x800. System rejects any image failed such requirements
+  - Maximum size of upload is 10MB and minimum resolution is 600x800
   - Only `.jpg` file is supported for the sake of simplicity
 
-- User Token Validation
-Each user token can only contain lowercase letters, digits, and underscores. Validation rules for the `user_token` are listed below:
+- User token
+Each user token can only contain lowercase letters, digits, and underscores. Validation scenarios for the `user_token` are listed below:
 
 | Validation Check           | Value              | Description                                           |
 |----------------------------|--------------------|-------------------------------------------------------|
@@ -61,7 +65,7 @@ Each user token can only contain lowercase letters, digits, and underscores. Val
 
 
 ## Access control:
-Access control of generated images are managed by `username_token` and `receiptId`. If an user tries to download someone else's image, `404` response will be sent. `403` is not used for security reason.
+Access control of images are managed by `username_token` and `receiptId`. If an user tries to download someone else's image, `404` response will be sent. `403` is not used for security reason.
 
 ## API endpoints:
 

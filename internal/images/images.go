@@ -12,10 +12,8 @@ import (
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
-	"receipt_uploader/internal/utils"
-	"strings"
+	"receipt_uploader/internal/models/image_meta"
 
-	"github.com/google/uuid"
 	"github.com/nfnt/resize"
 )
 
@@ -29,21 +27,24 @@ func NewService(d *configs.Dimensions) ServiceType {
 	}
 }
 
-func (s *Service) GenerateResizedImages(srcPath, destDir string) error {
-	logging.Debugf("GenerateResizedImages(srcPath: %s, destDir: %s)", srcPath, destDir)
+func (s *Service) GenerateResizedImages(imageMeta *image_meta.ImageMeta, destDir string) error {
+	logging.Debugf("GenerateResizedImages(srcPath: %s, destDir: %s)", imageMeta.Path, destDir)
 
-	fileBytes, readErr := os.ReadFile(srcPath)
+	fileBytes, readErr := os.ReadFile(imageMeta.Path)
 	if readErr != nil {
 		return fmt.Errorf("os.ReadFile() failed: %v", readErr)
 	}
 
+	destDir = filepath.Join(destDir, imageMeta.Username)
 	mkErr := os.MkdirAll(destDir, 0755)
 	if mkErr != nil {
 		err := fmt.Errorf("os.Mkdir() failed, err: %s", mkErr.Error())
 		return err
 	}
 
-	copyDestPath := utils.GenerateDestPath(srcPath, destDir, "")
+	copyDestPath := image_meta.GetResizedPath(imageMeta, destDir, "")
+	logging.Debugf("copyDestPath: %s)", copyDestPath)
+
 	copyErr := saveImage(&fileBytes, copyDestPath)
 	if copyErr != nil {
 		return fmt.Errorf("saveImage(copyDestPath: %s) failed, err: %s", copyDestPath, copyErr.Error())
@@ -59,11 +60,11 @@ func (s *Service) GenerateResizedImages(srcPath, destDir string) error {
 		if resizeErr != nil {
 			return fmt.Errorf(
 				"resizeImage(srcPath: %s, width: %d, height: %d) failed, err: %s",
-				srcPath, d.Width, d.Height, resizeErr.Error(),
+				imageMeta.Path, d.Width, d.Height, resizeErr.Error(),
 			)
 		}
 
-		destPath := utils.GenerateDestPath(srcPath, destDir, d.Name)
+		destPath := image_meta.GetResizedPath(imageMeta, destDir, d.Name)
 		logging.Debugf("destPath: %s", destPath)
 		saveErr := saveImage(&resizedImg, destPath)
 		if saveErr != nil {
@@ -107,41 +108,33 @@ func (s *Service) ParseImage(r *http.Request) ([]byte, error) {
 	return fileBytes, nil
 }
 
-func (s *Service) SaveUpload(bytes *[]byte, destDir string) (string, error) {
-	logging.Debugf("SaveUpload(len(bytes): %d, destDir: %s)", len(*bytes), destDir)
+func (s *Service) SaveUpload(bytes *[]byte, username, uploadDir string) (*image_meta.ImageMeta, error) {
+	logging.Debugf("SaveUpload(len(bytes): %d, uploadDir: %s)", len(*bytes), uploadDir)
 
-	mkErr := os.MkdirAll(destDir, 0755)
+	mkErr := os.MkdirAll(uploadDir, 0755)
 	if mkErr != nil {
 		err := fmt.Errorf("os.Mkdir() failed, err: %s", mkErr.Error())
-		return "", err
+		return nil, err
 	}
 
-	fileName := strings.ReplaceAll(uuid.New().String()+".jpg", "-", "")
-	destPath := filepath.Join(destDir, fileName)
+	extension := "jpg"
+	imageMeta := image_meta.FromFormData(username, extension, uploadDir)
+	saveImage(bytes, imageMeta.Path)
 
-	saveImage(bytes, destPath)
-
-	return destPath, nil
+	return imageMeta, nil
 }
 
-func (s *Service) GetImage(receiptId, size, srcDir string) ([]byte, string, error) {
-	logging.Debugf("GetImage(receiptId: %s, size: %s, srcDir: %s)", receiptId, size, srcDir)
-	fName := receiptId + ".jpg"
-	if size != "" {
-		fName = receiptId + "_" + size + ".jpg"
-	}
+func (s *Service) GetImage(imageMeta *image_meta.ImageMeta) ([]byte, string, error) {
+	logging.Debugf("GetImage(imageMeta.Path: %s, filaName: %s)", imageMeta.Path, imageMeta.FileName)
 
-	fPath := fmt.Sprintf("%s/%s", srcDir, fName)
-	logging.Debugf("fPath: %s", fPath)
-
-	fileBytes, readErr := os.ReadFile(fPath)
+	fileBytes, readErr := os.ReadFile(imageMeta.Path)
 	if readErr != nil {
 		if os.IsNotExist(readErr) {
 			return nil, "", readErr
 		}
 		return nil, "", fmt.Errorf("os.ReadFile() failed: %v", readErr)
 	}
-	return fileBytes, fName, nil
+	return fileBytes, imageMeta.FileName, nil
 }
 
 func resizeImage(img *image.Image, width, height int) ([]byte, error) {

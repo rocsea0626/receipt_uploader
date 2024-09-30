@@ -3,13 +3,13 @@ package handlers
 import (
 	"net/http"
 	"os"
-	"path/filepath"
 	"receipt_uploader/constants"
 	"receipt_uploader/internal/http_utils"
 	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
+	"receipt_uploader/internal/models/image_meta"
 )
 
 func DownloadReceipt(config *configs.Config, imagesService images.ServiceType) http.HandlerFunc {
@@ -41,8 +41,8 @@ func handleGet(w http.ResponseWriter, r *http.Request, config *configs.Config, i
 		return
 	}
 
-	srcDir := filepath.Join(config.ImagesDir, username)
-	fileBytes, fileName, getErr := imagesService.GetImage(receiptId, size, srcDir)
+	imageFile := image_meta.FromGetRequset(receiptId, size, username, config.ResizedDir)
+	fileBytes, fileName, getErr := imagesService.GetImage(imageFile)
 	if getErr != nil {
 		logging.Errorf("images.GetImage() failed, err: %s", getErr.Error())
 		if os.IsNotExist(getErr) {

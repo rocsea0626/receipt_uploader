@@ -18,6 +18,8 @@ import (
 )
 
 func CreateTestImage(filePath string, width, height int) error {
+	logging.Debugf("CreateTestImage(filePath: %s, w: %d, h: %d)", filePath, width, height)
+
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	for x := 0; x < img.Bounds().Dx(); x++ {
 		for y := 0; y < img.Bounds().Dy(); y++ {
@@ -65,12 +67,12 @@ func GenerateUploadRequest(t *testing.T, url string, fileName, userToken string)
 }
 
 func InitTestServer(config *configs.Config) error {
-	dirErr := os.MkdirAll(config.ImagesDir, 0755)
+	dirErr := os.MkdirAll(config.ResizedDir, 0755)
 	if dirErr != nil {
 		err := fmt.Errorf("os.Mkdir() failed, err: %s", dirErr.Error())
 		return err
 	}
-	logging.Debugf("folder %s has been created", config.ImagesDir)
+	logging.Debugf("folder %s has been created", config.ResizedDir)
 	return nil
 }
 

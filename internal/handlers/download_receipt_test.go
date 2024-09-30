@@ -17,22 +17,26 @@ import (
 )
 
 func TestDownloadReceiptHandler(t *testing.T) {
+	baseDir := "test-get"
 	config := configs.Config{
-		ImagesDir:  "./mock-get-images",
-		UploadsDir: "./mock-get-uploads",
+		ResizedDir: filepath.Join(baseDir, "resized"),
+		UploadsDir: filepath.Join(baseDir, "uploads"),
 		Dimensions: configs.AllowedDimensions,
 	}
 
 	test_utils.InitTestServer(&config)
-	defer os.RemoveAll(config.ImagesDir)
-	defer os.RemoveAll(config.UploadsDir)
+	defer os.RemoveAll(baseDir)
 
 	imagesService := images.NewService(&config.Dimensions)
 	t.Run("return 200, size=small", func(t *testing.T) {
-		receiptId := "testgetimage"
+		username := "test-user-get"
+		receiptId := "testrecieptid"
 		size := "small"
 		fileName := receiptId + "_" + size + ".jpg"
-		fPath := filepath.Join(config.ImagesDir, fileName)
+
+		userDir := filepath.Join(config.ResizedDir, username)
+		os.MkdirAll(userDir, 0755)
+		fPath := filepath.Join(userDir, fileName)
 
 		createErr := test_utils.CreateTestImage(fPath, 300, 300)
 		assert.Nil(t, createErr)
@@ -42,6 +46,7 @@ func TestDownloadReceiptHandler(t *testing.T) {
 
 		req, reqErr := http.NewRequest(http.MethodGet, url, nil)
 		assert.Nil(t, reqErr)
+		req.Header.Set("username_token", username)
 
 		rr := httptest.NewRecorder()
 		handler := DownloadReceipt(&config, imagesService)
@@ -105,7 +110,7 @@ func TestDownloadReceiptHandler(t *testing.T) {
 
 	t.Run("return 500, GetImage() failed", func(t *testing.T) {
 		mockConfig := configs.Config{
-			ImagesDir:  "mock_get_image_failed",
+			ResizedDir: "mock_get_image_failed",
 			Dimensions: configs.AllowedDimensions,
 		}
 		mockImagesService := images_mock.ServiceMock{}
