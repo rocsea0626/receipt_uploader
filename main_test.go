@@ -148,6 +148,41 @@ func TestMain(t *testing.T) {
 		assert.Equal(t, 800, height)
 	})
 
+	t.Run("return 405, POST /receipts/{receiptId}?size=large", func(t *testing.T) {
+		uploadFilePath := "./integ-test.jpg"
+		size := "large"
+		userToken := "valid_user"
+
+		test_utils.CreateTestImageJPG(uploadFilePath, 1000, 1200)
+		defer os.Remove(uploadFilePath)
+		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath, userToken)
+		assert.Nil(t, reqErr)
+
+		resp, err := client.Do(req)
+		assert.Nil(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+		var uploadResp http_responses.UploadResponse
+		test_utils.ParseResponseBody(t, resp, &uploadResp)
+		assert.NotEmpty(t, uploadResp.ReceiptID)
+
+		time.Sleep(5 * time.Second) // wait uploaded image to be resized
+
+		getUrl := fmt.Sprintf("%s/%s?size=%s", url, uploadResp.ReceiptID, size)
+		logging.Debugf("getUrl: %s", getUrl)
+		getReq, getReqErr := http.NewRequest(http.MethodPost, getUrl, nil)
+		getReq.Header.Set("username_token", userToken)
+		assert.Nil(t, getReqErr)
+
+		getResp, getErr := client.Do(getReq)
+		assert.Nil(t, getErr)
+		defer getResp.Body.Close()
+
+		assert.Equal(t, http.StatusMethodNotAllowed, getResp.StatusCode)
+	})
+
 	t.Run("return 200, GET /receipts/{receiptId}", func(t *testing.T) {
 		uploadFilePath := "./integ-test.jpg"
 		userToken := "valid_user"

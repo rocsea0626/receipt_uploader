@@ -133,7 +133,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 	})
 
 	t.Run("should fail, not allowed method", func(t *testing.T) {
-		req, reqErr := http.NewRequest(http.MethodDelete, "/receipts", nil)
+		req, reqErr := http.NewRequest(http.MethodGet, "/receipts", nil)
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()

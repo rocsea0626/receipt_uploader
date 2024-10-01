@@ -28,12 +28,11 @@ func TestMainStess(t *testing.T) {
 	os.RemoveAll(baseDir)
 
 	config := &configs.Config{
-		Port:          ":8080",
-		ResizedDir:    filepath.Join(baseDir, "resized"),
-		UploadsDir:    filepath.Join(baseDir, "uploads"),
-		Dimensions:    configs.AllowedDimensions,
-		Mode:          "release",
-		QueueCapacity: constants.QUEUE_CAPACITY,
+		Port:       ":8080",
+		ResizedDir: filepath.Join(baseDir, "resized"),
+		UploadsDir: filepath.Join(baseDir, "uploads"),
+		Dimensions: configs.AllowedDimensions,
+		Mode:       "release",
 	}
 	baseUrl := "http://localhost" + config.Port
 	defer os.RemoveAll(baseDir)

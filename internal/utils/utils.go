@@ -30,12 +30,11 @@ func LoadConfig() (*configs.Config, error) {
 	}
 
 	config := &configs.Config{
-		Port:          os.Getenv("PORT"),
-		ResizedDir:    filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_RESIZED")),
-		UploadsDir:    filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_UPLOADS")),
-		Dimensions:    configs.AllowedDimensions,
-		Mode:          os.Getenv("MODE"),
-		QueueCapacity: constants.QUEUE_CAPACITY,
+		Port:       os.Getenv("PORT"),
+		ResizedDir: filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_RESIZED")),
+		UploadsDir: filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_UPLOADS")),
+		Dimensions: configs.AllowedDimensions,
+		Mode:       os.Getenv("MODE"),
 	}
 
 	return config, nil
@@ -55,7 +54,7 @@ func StartServer(config *configs.Config, stopChan chan struct{}) {
 	}
 
 	imagesService := images.NewService(&config.Dimensions)
-	resizeQueue := resize_queue.NewService(config.QueueCapacity, imagesService)
+	resizeQueue := resize_queue.NewService(constants.QUEUE_CAPACITY, imagesService)
 	go resizeQueue.Start(stopChan)
 
 	srv := &http.Server{
