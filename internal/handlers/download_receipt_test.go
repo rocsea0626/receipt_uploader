@@ -38,7 +38,7 @@ func TestDownloadReceiptHandler(t *testing.T) {
 		os.MkdirAll(userDir, 0755)
 		fPath := filepath.Join(userDir, fileName)
 
-		createErr := test_utils.CreateTestImage(fPath, 300, 300)
+		createErr := test_utils.CreateTestImageJPG(fPath, 300, 300)
 		assert.Nil(t, createErr)
 
 		url := "/receipts/" + receiptId + "?size=small"
@@ -76,6 +76,23 @@ func TestDownloadReceiptHandler(t *testing.T) {
 
 	t.Run("return 400, invalid receiptId, receiptId=12.34", func(t *testing.T) {
 		receiptId := "12.34"
+		size := "larage"
+
+		url := fmt.Sprintf("/receipts/%s?size=%s", receiptId, size)
+		req, reqErr := http.NewRequest(http.MethodGet, url, nil)
+		assert.Nil(t, reqErr)
+
+		rr := httptest.NewRecorder()
+		handler := DownloadReceipt(&config, imagesService)
+
+		handler.ServeHTTP(rr, req)
+
+		status := rr.Code
+		assert.Equal(t, http.StatusBadRequest, status)
+	})
+
+	t.Run("return 400, invalid receiptId, receiptId=Ab1234", func(t *testing.T) {
+		receiptId := "Ab1234"
 		size := "larage"
 
 		url := fmt.Sprintf("/receipts/%s?size=%s", receiptId, size)

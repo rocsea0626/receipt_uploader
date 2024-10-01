@@ -7,6 +7,7 @@ import (
 	"image"
 	"image/color"
 	"image/jpeg"
+	"image/png"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -23,24 +24,11 @@ import (
 	"golang.org/x/exp/rand"
 )
 
-// func CreateTestImage(filePath string, width, height int) error {
-// 	logging.Debugf("CreateTestImage(filePath: %s, w: %d, h: %d)", filePath, width, height)
+func CreateTestImageJPG(filePath string, width, height int) error {
+	return CreateTestImageWithFormat(filePath, width, height, "jpeg")
+}
 
-// 	img := image.NewRGBA(image.Rect(0, 0, width, height))
-// 	for x := 0; x < img.Bounds().Dx(); x++ {
-// 		for y := 0; y < img.Bounds().Dy(); y++ {
-// 			img.Set(x, y, color.RGBA{uint8(x % 256), uint8(y % 256), 255, 255})
-// 		}
-// 	}
-// 	out, err := os.Create(filePath)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer out.Close()
-// 	return jpeg.Encode(out, img, nil)
-// }
-
-func CreateTestImage(filePath string, width, height int) error {
+func CreateTestImageWithFormat(filePath string, width, height int, format string) error {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
 	rand.Seed(uint64(time.Now().UnixNano()))
@@ -64,6 +52,9 @@ func CreateTestImage(filePath string, width, height int) error {
 
 	opts := jpeg.Options{
 		Quality: 95,
+	}
+	if format == "png" {
+		return png.Encode(out, img)
 	}
 	return jpeg.Encode(out, img, &opts)
 }

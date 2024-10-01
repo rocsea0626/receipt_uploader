@@ -7,7 +7,7 @@ Clone the repository:
 
 ```bash
 
-git clone https://github.com/yourusername/receipt-uploader.git
+git clone https://github.com/rocsea0626/receipt-uploader.git
 cd receipt-uploader
 
 go mod download
@@ -44,7 +44,7 @@ All requests must have `username_token` attached in the header. All images are s
   - Resized images are stored under `receipts/config.DIR_RESIZED/{username}` folder
   - Each original receipt is converted into 3 different sizes: small, medium and large.
   - Resize images are proportionally scaled to maintain original aspect ratio.
-  - To prevent server being overwhelmed by large number of requests, a worker goroutine keeps running continuously in background to scan `receipts/config.UPLOADS_DIR` folder with an interval of `config.Interval` and resize each uploaded receipt. Currently, the `config.Interval=1 second`, which means it can resize 1 image per second maximum.
+  - To prevent server being overwhelmed by large number of requests, a worker goroutine keeps running continuously in background to scan `receipts/config.UPLOADS_DIR` folder with an interval of `config.Interval` and resize each uploaded receipt. Currently, the `config.Interval=1 second`, which means it can resize 1 image per second maximum if resizing completes within a second. This approach does not garauntee FIFO of image resizing.
   - Once resizing completes, original receipt will be moved to `receipts/config.DIR_RESIZED/{username}` folder
   
 ### Downloading of receipt 
@@ -71,9 +71,9 @@ All requests must have `username_token` attached in the header. All images are s
 | Error code | Error case                                 |
 |------------|--------------------------------------------|
 | 400        | invalid input, size > 10MB                 |
-| 400        | invalid input, widh < 600                  |
+| 400        | invalid input, width < 600                  |
 | 400        | invalid input, height < 800                |
-| 400        | invalid image format                       |
+| 400        | invalid image format, format=png           |
 | 405        | not allowed method to a endpoint           |
 | 500        | internal server error                      |
 | 201        | receipt is stored successfully             |
@@ -87,9 +87,9 @@ All requests must have `username_token` attached in the header. All images are s
 ```
 | Error code | Error case                                 |
 |------------|--------------------------------------------|
-| 400        | invalid query parameter value, ?size=xl                     |
-| 400        | invalid query parameter key, ?resolution=small                     |
-| 404        | not found, access control failed or not found           |
+| 400        | invalid query parameter value, ?size=xl    |
+| 400        | invalid query parameter key, ?resolution=small |
+| 404        | not found, access control failed or not found  |
 | 405        | not allowed method to a endpoint           |
 | 500        | internal server error                      |
 | 201        | receipt is stored successfully             |
@@ -186,12 +186,13 @@ Temporary files will be created then deleted when running all tests:
 This section addresses improvement can be done in real world case
 
 ### System security
-- Access control: JWT token, user-role based ACM and database can be utilized to achieve comprehensive access control
+- Access control: JWT token with OAuth 2.0, user-role based ACM and database can be utilized to achieve comprehensive access control
 - All servers should be configured to use HTTPS for secure communication, and data storage must be encrypted to protect sensitive information. However, these features are intentionally excluded from this PoC project.
 - This implementation does not check uploading of duplicate receipts. In reality this can be handled by `TransactionID` issued by payment service provider.
 ### Performance
 - Mechanism needs to implemented to prevent system being crashed by large number of requests. `JobQueue` or `EventBus` can be utilized for this.
 - Caching, Rate limiting and request throttling should be inplemented as well
 - If resizing failed, mechanism need to be implemented to notify client, such as sending an email.
+- Use load balancer and containers to allow to scale up horizontally
 ### API backward compability
 - API endpoints need to be versioned

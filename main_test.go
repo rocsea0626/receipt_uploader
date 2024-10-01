@@ -54,7 +54,7 @@ func TestMain(t *testing.T) {
 		uploadFilePath := "./integ-test.jpg"
 		userToken := "valid_user"
 
-		test_utils.CreateTestImage(uploadFilePath, 1000, 1200)
+		test_utils.CreateTestImageJPG(uploadFilePath, 1000, 1200)
 		defer os.Remove(uploadFilePath)
 		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath, userToken)
 		assert.Nil(t, reqErr)
@@ -74,7 +74,7 @@ func TestMain(t *testing.T) {
 		uploadFilePath := "./integ-test.jpg"
 		userToken := "valid_user"
 
-		test_utils.CreateTestImage(uploadFilePath, 0, 0)
+		test_utils.CreateTestImageJPG(uploadFilePath, 0, 0)
 		defer os.Remove(uploadFilePath)
 		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath, userToken)
 		assert.Nil(t, reqErr)
@@ -93,7 +93,7 @@ func TestMain(t *testing.T) {
 		uploadFilePath := "./integ-test.jpg"
 		userToken := ""
 
-		test_utils.CreateTestImage(uploadFilePath, 1000, 1200)
+		test_utils.CreateTestImageJPG(uploadFilePath, 1000, 1200)
 		defer os.Remove(uploadFilePath)
 		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath, userToken)
 		assert.Nil(t, reqErr)
@@ -110,7 +110,7 @@ func TestMain(t *testing.T) {
 		size := "large"
 		userToken := "valid_user"
 
-		test_utils.CreateTestImage(uploadFilePath, 1000, 1200)
+		test_utils.CreateTestImageJPG(uploadFilePath, 1000, 1200)
 		defer os.Remove(uploadFilePath)
 		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath, userToken)
 		assert.Nil(t, reqErr)
@@ -153,7 +153,7 @@ func TestMain(t *testing.T) {
 		uploadFilePath := "./integ-test.jpg"
 		userToken := "valid_user"
 
-		test_utils.CreateTestImage(uploadFilePath, 1000, 1200)
+		test_utils.CreateTestImageJPG(uploadFilePath, 1000, 1200)
 		defer os.Remove(uploadFilePath)
 		req, reqErr := test_utils.GenerateUploadRequest(t, url, uploadFilePath, userToken)
 		assert.Nil(t, reqErr)

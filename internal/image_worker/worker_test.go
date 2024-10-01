@@ -18,9 +18,6 @@ import (
 func TestResizeImages(t *testing.T) {
 	t.Run("succeed", func(t *testing.T) {
 		imageService := images.NewService(&configs.AllowedDimensions)
-		service := &Service{
-			ImageService: imageService,
-		}
 
 		baseDir := "image_worker"
 		uploadsDir := filepath.Join(baseDir, "uploads")
@@ -34,9 +31,9 @@ func TestResizeImages(t *testing.T) {
 		testFilename := username + "#receiptupload123.jpg"
 		testFilePath := filepath.Join(uploadsDir, testFilename)
 		imageFile := image_meta.FromFormData(username, extension, uploadsDir)
-		test_utils.CreateTestImage(imageFile.Path, 1000, 1200)
+		test_utils.CreateTestImageJPG(imageFile.Path, 1000, 1200)
 
-		resizeErr := service.ResizeImages(uploadsDir, destDir)
+		resizeErr := resizeImages(uploadsDir, destDir, imageService)
 		assert.Nil(t, resizeErr)
 
 		smallImagePath := image_meta.GetResizedPath(imageFile, filepath.Join(destDir, username), "small")
@@ -57,9 +54,6 @@ func TestResizeImages(t *testing.T) {
 
 	t.Run("should fail, GenerateResizedImages() failed", func(t *testing.T) {
 		mockImagesService := &images_mock.ServiceMock{}
-		service := &Service{
-			ImageService: mockImagesService,
-		}
 
 		baseDir := "image_worker"
 		uploadsDir := filepath.Join(baseDir, "uploads")
@@ -71,9 +65,9 @@ func TestResizeImages(t *testing.T) {
 		username := "user_1"
 		extension := "jpg"
 		imageFile := image_meta.FromFormData(username, extension, uploadsDir)
-		test_utils.CreateTestImage(imageFile.Path, 1000, 1200)
+		test_utils.CreateTestImageJPG(imageFile.Path, 1000, 1200)
 
-		resizeErr := service.ResizeImages(uploadsDir, destDir)
+		resizeErr := resizeImages(uploadsDir, destDir, mockImagesService)
 		assert.NotNil(t, resizeErr)
 		logging.Debugf("resizeErr: %s", resizeErr.Error())
 

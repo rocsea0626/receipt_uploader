@@ -17,11 +17,11 @@ type Dimensions []Dimension
 var AllowedDimensions = Dimensions{
 	{
 		Width:  0, // set to 0 to keep original ratio of image
-		Height: 120,
+		Height: constants.IMAGE_SIZE_MIN_H - 680,
 		Name:   "small",
 	}, {
 		Width:  0,
-		Height: 600,
+		Height: constants.IMAGE_SIZE_MIN_H - 200,
 		Name:   "medium",
 	}, {
 		Width:  0,

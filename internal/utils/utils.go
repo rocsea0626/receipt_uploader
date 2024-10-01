@@ -13,7 +13,6 @@ import (
 	"receipt_uploader/internal/middlewares"
 	"receipt_uploader/internal/models/configs"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -50,8 +49,8 @@ func LoadConfig() (*configs.Config, error) {
 func StartServer(config *configs.Config, stopChan chan struct{}) {
 	fmt.Println("starting server...")
 	if config.Mode == "release" {
-		fmt.Println("running in release mode, set log level to INFO")
 		logging.SetGlobalLevel(logging.INFO_LEVEL)
+		fmt.Println("running in release mode, set log level to INFO")
 	}
 
 	initErr := initDirs(config)
@@ -61,18 +60,9 @@ func StartServer(config *configs.Config, stopChan chan struct{}) {
 	}
 
 	imagesService := images.NewService(&config.Dimensions)
-	imgWorkerService := image_worker.NewService(imagesService)
+	workerService := image_worker.NewService(config, imagesService)
 
-	go startWorker(
-		config.Interval,
-		func() {
-			resizeErr := imgWorkerService.ResizeImages(config.UploadsDir, config.ResizedDir)
-			if resizeErr != nil {
-				logging.Errorf("workerService.ResizeImages() failed, err: %s", resizeErr.Error())
-			}
-		},
-		stopChan,
-	)
+	go workerService.Start(stopChan)
 
 	setupRouter(config, imagesService)
 
@@ -81,25 +71,6 @@ func StartServer(config *configs.Config, stopChan chan struct{}) {
 		fmt.Println("Error starting server:", err)
 	}
 
-}
-
-func startWorker(internal time.Duration, processFunc func(), stopChan <-chan struct{}) {
-	logging.Debugf("startWorker()...")
-	var wg sync.WaitGroup
-
-	for {
-		select {
-		case <-stopChan:
-			fmt.Println("Stopping startWorker()")
-			wg.Wait()
-			return
-		case <-time.After(internal):
-			logging.Debugf("Wake up after sleeping, starting processing...")
-			wg.Add(1)
-			defer wg.Done()
-			processFunc()
-		}
-	}
 }
 
 func initDirs(config *configs.Config) error {

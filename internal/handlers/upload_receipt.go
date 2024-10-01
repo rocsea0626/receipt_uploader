@@ -50,7 +50,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		http_utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
 		return
 	}
-	logging.Infof("image save to path: %s", imgFile.Path)
+	logging.Infof("image has been saved to path: %s", imgFile.Path)
 
 	receiptID := imgFile.ReceiptID
 	resp := http_responses.UploadResponse{

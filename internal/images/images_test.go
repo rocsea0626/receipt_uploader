@@ -28,7 +28,7 @@ func TestGenerateImages(t *testing.T) {
 	service := NewService(&configs.AllowedDimensions)
 
 	t.Run("succeed", func(t *testing.T) {
-		createErr := test_utils.CreateTestImage(srcPath, 800, 1200)
+		createErr := test_utils.CreateTestImageJPG(srcPath, 800, 1200)
 		assert.Nil(t, createErr)
 
 		imageMeta, imageErr := image_meta.FromUploadDir(srcPath)
@@ -61,7 +61,7 @@ func TestResizeImage(t *testing.T) {
 		orgWidth := 800
 		orgHeight := 1200
 
-		createImgErr := test_utils.CreateTestImage(testFilePath, orgWidth, orgHeight)
+		createImgErr := test_utils.CreateTestImageJPG(testFilePath, orgWidth, orgHeight)
 		assert.Nil(t, createImgErr)
 		defer os.Remove(testFilePath)
 
@@ -101,7 +101,7 @@ func TestGetImage(t *testing.T) {
 		fileName := receiptId + ".jpg"
 		fPath := filepath.Join(srcDir, fileName)
 
-		createImgErr := test_utils.CreateTestImage(fPath, 100, 100)
+		createImgErr := test_utils.CreateTestImageJPG(fPath, 100, 100)
 		assert.Nil(t, createImgErr)
 
 		imageMeta := &image_meta.ImageMeta{
@@ -122,7 +122,7 @@ func TestGetImage(t *testing.T) {
 		fileName := receiptId + "_" + size + ".jpg"
 		fPath := filepath.Join(srcDir, fileName)
 
-		createImgErr := test_utils.CreateTestImage(fPath, 100, 100)
+		createImgErr := test_utils.CreateTestImageJPG(fPath, 100, 100)
 		assert.Nil(t, createImgErr)
 
 		imageMeta := &image_meta.ImageMeta{
@@ -143,7 +143,7 @@ func TestGetImage(t *testing.T) {
 		fileName := receiptId + "_" + size + ".jpg"
 		fPath := filepath.Join(srcDir, fileName)
 
-		createImgErr := test_utils.CreateTestImage(fPath, 100, 100)
+		createImgErr := test_utils.CreateTestImageJPG(fPath, 100, 100)
 		assert.Nil(t, createImgErr)
 
 		imageMeta := &image_meta.ImageMeta{

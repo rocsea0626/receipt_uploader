@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var numClients = 15
+var numClients = 50
 
 func TestMainStess(t *testing.T) {
 
@@ -45,7 +45,7 @@ func TestMainStess(t *testing.T) {
 
 	go utils.StartServer(config, stopChan)
 
-	t.Run("stress testing, multiple POST /receipts request", func(t *testing.T) {
+	t.Run("stress testing, multiple POST&GET /receipts request", func(t *testing.T) {
 		waitTime := numClients * 2
 		var wg sync.WaitGroup
 		url := baseUrl + "/receipts"
@@ -107,6 +107,61 @@ func TestMainStess(t *testing.T) {
 				_, height := test_utils.GetImageDimension(t, getResp)
 				assert.Equal(t, configs.AllowedDimensions[0].Height, height)
 			}(token, receiptID)
+		}
+		wg.Wait()
+	})
+
+	t.Run("stress testing, multiple GET /receipts request for same receipt", func(t *testing.T) {
+		waitTime := 2
+		var wg sync.WaitGroup
+		url := baseUrl + "/receipts"
+
+		// upload 1 receipt
+		userToken := "user_token_0"
+		req, reqErr := test_utils.GenerateUploadRequest(t, url, "test_image.jpg", userToken)
+		assert.Nil(t, reqErr)
+
+		resp, err := client.Do(req)
+		assert.Nil(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+		var uploadResp http_responses.UploadResponse
+		test_utils.ParseResponseBody(t, resp, &uploadResp)
+		assert.NotEmpty(t, uploadResp.ReceiptID)
+
+		logging.Infof("waiting %d s for server completes resizing of all uploaded images...", waitTime)
+		time.Sleep(time.Duration(waitTime) * time.Second)
+
+		size := "medium"
+		for i := 0; i < numClients; i++ {
+			wg.Add(1)
+
+			go func(token, receiptID string) {
+				defer wg.Done()
+
+				getUrl := fmt.Sprintf("%s/%s?size=%s", url, receiptID, size)
+
+				getReq, getReqErr := http.NewRequest(http.MethodGet, getUrl, nil)
+				getReq.Header.Set("username_token", token)
+				assert.Nil(t, getReqErr)
+
+				getResp, getErr := client.Do(getReq)
+				assert.Nil(t, getErr)
+				defer getResp.Body.Close()
+
+				assert.Equal(t, http.StatusOK, getResp.StatusCode)
+				header, headerErr := test_utils.ParseDownloadResponseHeader(getResp)
+				assert.Nil(t, headerErr)
+				assert.Equal(t, "image/jpeg", header.ContentType)
+
+				fileName := receiptID + "_" + size + ".jpg"
+				assert.Equal(t, fileName, header.Filename)
+
+				_, height := test_utils.GetImageDimension(t, getResp)
+				assert.Equal(t, configs.AllowedDimensions[1].Height, height)
+			}(userToken, uploadResp.ReceiptID)
 		}
 		wg.Wait()
 	})
