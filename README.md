@@ -20,7 +20,7 @@ curl -X POST http://localhost:8080/receipts -F "receipt=@test_image.jpg" -H "use
 
 response: 
 {
-  "receiptId": "4179e13020ad43bab4d8867338f0f048"
+  "receiptId": "receiptId-in-response"
 }
 
 # Example request to download original image
