@@ -18,24 +18,24 @@ func SendHealthResponse(w http.ResponseWriter, resp *http_responses.HealthRespon
 	errMap := map[string]string{
 		"message": resp.Message,
 	}
-	sendResponse(w, &errMap, status)
+	sendJSONResponse(w, &errMap, status)
 }
 
 func SendErrorResponse(w http.ResponseWriter, resp *http_responses.ErrorResponse, status int) {
 	errMap := map[string]string{
 		"error": resp.Error,
 	}
-	sendResponse(w, &errMap, status)
+	sendJSONResponse(w, &errMap, status)
 }
 
 func SendUploadResponse(w http.ResponseWriter, resp *http_responses.UploadResponse) {
 	respMap := map[string]string{
 		"receiptId": resp.ReceiptID,
 	}
-	sendResponse(w, &respMap, http.StatusCreated)
+	sendJSONResponse(w, &respMap, http.StatusCreated)
 }
 
-func SendImageDownloadResponse(w http.ResponseWriter, fileName string, fileBytes *[]byte) {
+func SendGetImageResponse(w http.ResponseWriter, fileName string, fileBytes *[]byte) {
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", len(*fileBytes)))
@@ -85,7 +85,7 @@ func ValidateGetImageRequest(r *http.Request, dimensions *configs.Dimensions) (s
 	return receiptID, size, nil
 }
 
-func sendResponse(w http.ResponseWriter, response *map[string]string, status int) {
+func sendJSONResponse(w http.ResponseWriter, response *map[string]string, status int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(*response)

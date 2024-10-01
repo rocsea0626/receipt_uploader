@@ -60,5 +60,5 @@ func handleGet(w http.ResponseWriter, r *http.Request, config *configs.Config, i
 	}
 
 	logging.Infof("response with image: %s", imageMeta.FileName)
-	http_utils.SendImageDownloadResponse(w, fileName, &fileBytes)
+	http_utils.SendGetImageResponse(w, fileName, &fileBytes)
 }

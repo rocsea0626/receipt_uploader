@@ -57,6 +57,45 @@ func TestDownloadReceiptHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, status)
 	})
 
+	t.Run("return 200, size is empty", func(t *testing.T) {
+		username := "test-user-get"
+		receiptId := "testrecieptid"
+		fileName := receiptId + ".jpg"
+
+		userDir := filepath.Join(config.ResizedDir, username)
+		os.MkdirAll(userDir, 0755)
+		fPath := filepath.Join(userDir, fileName)
+
+		createErr := test_utils.CreateTestImageJPG(fPath, 300, 300)
+		assert.Nil(t, createErr)
+
+		url := "/receipts/" + receiptId + "?size"
+		logging.Debugf("url: %s", url)
+
+		req, reqErr := http.NewRequest(http.MethodGet, url, nil)
+		assert.Nil(t, reqErr)
+		req.Header.Set("username_token", username)
+
+		rr := httptest.NewRecorder()
+		handler := DownloadReceipt(&config, imagesService)
+
+		handler.ServeHTTP(rr, req)
+
+		status := rr.Code
+		assert.Equal(t, http.StatusOK, status)
+
+		url1 := "/receipts/" + receiptId + "?size="
+		logging.Debugf("url: %s", url)
+
+		req1, reqErr1 := http.NewRequest(http.MethodGet, url1, nil)
+		assert.Nil(t, reqErr1)
+		req.Header.Set("username_token", username)
+		handler.ServeHTTP(rr, req1)
+
+		status1 := rr.Code
+		assert.Equal(t, http.StatusOK, status1)
+	})
+
 	t.Run("return 404, not found by receiptId", func(t *testing.T) {
 		receiptId := "notfound"
 		size := "medium"

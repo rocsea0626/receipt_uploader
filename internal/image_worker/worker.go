@@ -35,7 +35,7 @@ func (s *Service) Start(stopChan <-chan struct{}) {
 	for {
 		select {
 		case <-stopChan:
-			fmt.Println("Stopping startWorker()")
+			fmt.Println("Stopping image worker...")
 			wg.Wait()
 			return
 		case <-time.After(s.Interval):

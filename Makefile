@@ -47,8 +47,4 @@ stress-test:
 	$(STRESS_TEST) $(VERBOSE)
 
 clean:
-	- rm -rf images
-
-submit:
-	@echo "packing project for submission..."
-	- zip -r receipt_uploader.zip . -x '.git/*' coverage.out *.zip bin/*
+	- rm -rf receipts

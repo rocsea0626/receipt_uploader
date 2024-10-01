@@ -60,6 +60,7 @@ func TestResizeImages(t *testing.T) {
 		destDir := "mock_generate_images_failed"
 		os.MkdirAll(uploadsDir, 0755)
 		os.MkdirAll(destDir, 0755)
+		defer os.RemoveAll(destDir)
 		defer os.RemoveAll(baseDir)
 
 		username := "user_1"
