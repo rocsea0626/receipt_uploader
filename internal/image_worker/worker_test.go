@@ -104,4 +104,31 @@ func TestResizeImages(t *testing.T) {
 		_, fileErr := os.Stat(imageMeta.Path)
 		assert.Nil(t, fileErr)
 	})
+
+	t.Run("should fail, GenerateResizedImages() timeout", func(t *testing.T) {
+
+		mockImagesService := &images_mock.ServiceMock{}
+
+		baseDir := "image_worker"
+		uploadsDir := filepath.Join(baseDir, "uploads")
+		destDir := "mock_generate_images_timeout"
+		os.MkdirAll(uploadsDir, 0755)
+		os.MkdirAll(destDir, 0755)
+		defer os.RemoveAll(destDir)
+		defer os.RemoveAll(baseDir)
+
+		username := "user_1"
+		extension := "jpg"
+		timeout := constants.IMAGE_WORKER_TIMEOUT - 1*time.Second
+
+		imageFile := image_meta.FromFormData(username, extension, uploadsDir)
+		test_utils.CreateTestImageJPG(imageFile.Path, 1000, 1200)
+
+		resizeErr := resizeImages(uploadsDir, destDir, timeout, mockImagesService)
+		assert.NotNil(t, resizeErr)
+		assert.Contains(t, resizeErr.Error(), "resizeImages() timed out")
+
+		_, fileErr := os.Stat(imageFile.Path)
+		assert.Nil(t, fileErr)
+	})
 }
