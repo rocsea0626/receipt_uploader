@@ -40,7 +40,7 @@ func TestWithTimeout(t *testing.T) {
 		queue := resize_queue.NewService(2, mockImagesService)
 
 		task := tasks.ResizeTask{ImageMeta: image_meta.ImageMeta{Path: "test/path"}, DestDir: "test/destDir"}
-		timeout := constants.IMAGE_WORKER_TIMEOUT
+		timeout := constants.RESIZE_TIMEOUT
 		err := queue.WithTimeout(task, timeout)
 		assert.Nil(t, err)
 	})
@@ -50,7 +50,7 @@ func TestWithTimeout(t *testing.T) {
 		queue := resize_queue.NewService(2, mockImagesService)
 
 		task := tasks.ResizeTask{ImageMeta: image_meta.ImageMeta{Path: "test/path"}, DestDir: "mock_generate_images_timeout"}
-		timeout := constants.IMAGE_WORKER_TIMEOUT - 1*time.Second
+		timeout := constants.RESIZE_TIMEOUT - 1*time.Second
 		err := queue.WithTimeout(task, timeout)
 		assert.NotNil(t, err)
 		assert.Contains(t, err.Error(), "resizeImages() timed out")

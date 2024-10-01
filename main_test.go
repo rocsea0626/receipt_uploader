@@ -26,7 +26,6 @@ func TestMain(t *testing.T) {
 		ResizedDir: filepath.Join(baseDir, "resized"),
 		UploadsDir: filepath.Join(baseDir, "uploads"),
 		Dimensions: configs.AllowedDimensions,
-		Interval:   time.Duration(1) * time.Second,
 	}
 	baseUrl := "http://localhost" + config.Port
 	url := baseUrl + "/receipts"

@@ -59,7 +59,7 @@ func (q *ResizeQueue) Process() {
 		q.wg.Add(1)
 		err := q.WithTimeout(task, 2*time.Second)
 		if err != nil {
-			logging.Errorf("withTimeout() failed, path: '%s', err: %s", task.ImageMeta.Path, err)
+			logging.Errorf("WithTimeout() failed, path: '%s', err: %s", task.ImageMeta.Path, err)
 		}
 		q.wg.Done()
 	}
@@ -89,7 +89,7 @@ func (q *ResizeQueue) WithTimeout(task tasks.ResizeTask, timeout time.Duration) 
 		startTime := time.Now()
 		err := q.imagesService.GenerateResizedImages(&task.ImageMeta, task.DestDir)
 		if err != nil {
-			errChan <- fmt.Errorf("s.ImageService.GenerateResizedImages() failed, err: %w", err)
+			errChan <- fmt.Errorf("GenerateResizedImages() failed, err: %w", err)
 			return
 		}
 		elapsedTime := time.Since(startTime)

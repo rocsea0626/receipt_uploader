@@ -2,7 +2,6 @@ package configs
 
 import (
 	"receipt_uploader/internal/constants"
-	"time"
 )
 
 // defines resized image's size and name of the size
@@ -34,8 +33,7 @@ type Config struct {
 	ResizedDir    string // dir to store resize images
 	UploadsDir    string // dir to store uploads
 	Port          string
-	Dimensions    Dimensions    // allowed resizing options
-	Interval      time.Duration // Interval for worker in seconds
-	Mode          string        // dev, qa, release
+	Dimensions    Dimensions // allowed resizing options
+	Mode          string     // dev, qa, release
 	QueueCapacity int
 }

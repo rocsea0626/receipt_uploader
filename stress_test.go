@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var numClients = 100
+var numClients = constants.QUEUE_CAPACITY
 
 func TestMainStess(t *testing.T) {
 
@@ -32,7 +32,6 @@ func TestMainStess(t *testing.T) {
 		ResizedDir:    filepath.Join(baseDir, "resized"),
 		UploadsDir:    filepath.Join(baseDir, "uploads"),
 		Dimensions:    configs.AllowedDimensions,
-		Interval:      time.Duration(1) * time.Second,
 		Mode:          "release",
 		QueueCapacity: constants.QUEUE_CAPACITY,
 	}

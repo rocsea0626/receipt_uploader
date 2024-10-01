@@ -27,7 +27,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 	defer os.RemoveAll(config.UploadsDir)
 
 	imagesService := images.NewService(&config.Dimensions)
-	mockTaskQueue := &resize_queue_mock.ServiceMock{}
+	mockResizeQueue := &resize_queue_mock.ServiceMock{}
 
 	t.Run("succeed, POST, 1200x1200 image", func(t *testing.T) {
 		fileName := "test_image_save_upload.jpg"
@@ -40,7 +40,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
+		handler := UploadReceipt(&config, imagesService, mockResizeQueue)
 
 		handler.ServeHTTP(rr, req)
 
@@ -59,7 +59,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
+		handler := UploadReceipt(&config, imagesService, mockResizeQueue)
 
 		handler.ServeHTTP(rr, req)
 
@@ -78,7 +78,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
+		handler := UploadReceipt(&config, imagesService, mockResizeQueue)
 
 		handler.ServeHTTP(rr, req)
 
@@ -101,7 +101,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
+		handler := UploadReceipt(&config, imagesService, mockResizeQueue)
 
 		handler.ServeHTTP(rr, req)
 
@@ -124,7 +124,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
+		handler := UploadReceipt(&config, imagesService, mockResizeQueue)
 
 		handler.ServeHTTP(rr, req)
 
@@ -137,7 +137,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
+		handler := UploadReceipt(&config, imagesService, mockResizeQueue)
 
 		handler.ServeHTTP(rr, req)
 

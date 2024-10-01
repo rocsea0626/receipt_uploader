@@ -24,7 +24,7 @@ func (s *ServiceMock) GenerateResizedImages(imageMeta *image_meta.ImageMeta, des
 	}
 
 	if destDir == "mock_generate_images_timeout" {
-		time.Sleep(constants.IMAGE_WORKER_TIMEOUT)
+		time.Sleep(constants.RESIZE_TIMEOUT)
 		return nil
 	}
 	return nil

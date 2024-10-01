@@ -9,13 +9,13 @@ import (
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
 	"receipt_uploader/internal/models/tasks"
-	task_queue "receipt_uploader/internal/resize_queue"
+	"receipt_uploader/internal/resize_queue"
 )
 
 func UploadReceipt(
 	config *configs.Config,
 	imagesService images.ServiceType,
-	taskQueue task_queue.ServiceType,
+	resizeQueue resize_queue.ServiceType,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logging.Infof("received request, %s, %s", r.Method, r.URL.Path)
@@ -28,7 +28,7 @@ func UploadReceipt(
 			return
 		}
 
-		handlePost(w, r, config, imagesService, taskQueue)
+		handlePost(w, r, config, imagesService, resizeQueue)
 	}
 }
 
@@ -37,7 +37,7 @@ func handlePost(
 	r *http.Request,
 	config *configs.Config,
 	imagesService images.ServiceType,
-	taskQueue task_queue.ServiceType,
+	resizeQueue resize_queue.ServiceType,
 ) {
 	logging.Debugf("handlePost()")
 	username := r.Header.Get("username_token")
@@ -68,8 +68,8 @@ func handlePost(
 		ImageMeta: *imageMeta,
 		DestDir:   config.ResizedDir,
 	}
-	if !taskQueue.Enqueue(task) {
-		logging.Infof("taskQueue.Enqueue() failed")
+	if !resizeQueue.Enqueue(task) {
+		logging.Infof("resizeQueue.Enqueue() failed")
 		resp := http_responses.ErrorResponse{
 			Error: constants.HTTP_ERR_MSG_500,
 		}

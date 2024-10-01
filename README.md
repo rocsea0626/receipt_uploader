@@ -44,8 +44,7 @@ make stress-test # run stress test
 Temporary files will be created then deleted when tests complete:
 - unit test: all unit test cases are defined within each module's folder.
 - integration test: defined in `main_test.go` and it starts a server on localhost.
-- stress test: defined in `stress_test.go` and multiple requests are send to a localhost server at the same time.
-
+- stress test: defined in `stress_test.go` and it simulates scenario that 100 clents uploading and downloading at same time.
 
 
 ## System design and specifications
@@ -54,22 +53,23 @@ All requests must have `username_token` attached in the header. All images are s
 ### Uploading of receipt
   - Endpoint: Handled by request of `POST /receipts`
   - Each original upload of receipts is stored under `receipts/config.UPLOADS_DIR/` folder, named as `username#uuid-without-dash.jpg`.
-  - A `201` response is immediately sent to client once receipt is stored at server so that user does not need to wait for resizing to complete
+  - Handler submits a resizing job to `resize_queue`.
 
 ### Resizing of image
   - All images are named with uuid without "-" and resized images are suffixed by size, i.e., `4179e13020ad43bab4d8867338f0f048_small.jpg` and stored under `receipts/config.DIR_RESIZED/{username}` folder
   - Each original receipt is converted into 3 different sizes: small, medium and large.
   - Resized images are proportionally scaled to maintain original aspect ratio.
-  - Large number of requests: to prevent server being overwhelmed by large number of requests, a worker goroutine keeps running continuously in background to scan `receipts/config.UPLOADS_DIR` folder with an interval of `config.Interval` and resize the first uploaded receipt found in that folder. Currently, `config.Interval=1` which means it can resize 1 image per second maximum. However, this approach does not garauntee FIFO order of uploaded images.
-  - Resizing timeout: to prevent resizing of one image hanging for too long, timeout is configured as `constants.IMAGE_WORKER_TIMEOUT=2`
-  - Once resizing completes, original receipt will be moved to `receipts/config.DIR_RESIZED/{username}` folder
-  
+  - Large number of requests: to prevent server being overwhelmed by large number of requests, a `resize_queue` with capacity defined in `constants.QUEUE_CAPACITY` keeps running continuously in background to process resizing jobs.
+  - Resizing timeout: to prevent resizing of one image blocking subsequent resizing jobs, timeout is configured as `constants.RESIZE_TIMEOUT=2` for 2 seconds for each job.
+  - All the original uploaded receipts will be kept in `config.UPLOADS_DIR`
+
+
 ### Downloading of receipt 
 - To get images with different size: `GET /api/receipts/{receiptId}?size=small|medium|large`
 - To get image with original size: `GET /api/receipts/{receiptId}`
 
 ### Error Handling
-- If image resizing failed, original uploaded receipt will be kept in `config.DIR_UPLOADS` folder.
+- If resing job submission fails 500 will be sent to client.
 - Internal system error messages are hidden from clients. Only standard http error messages defined in `constants` module are sent to clients.
 - System should not crash because of any runtime error.
 
@@ -146,10 +146,6 @@ Each user token can only contain lowercase letters, digits, and underscores. Val
 │   ├── http_utils
 │   │   ├── http_utils.go
 │   │   └── http_utils_test.go
-│   ├── image_worker
-│   │   ├── types.go
-│   │   ├── worker.go
-│   │   └── worker_test.go
 │   ├── images
 │   │   ├── images.go
 │   │   ├── images_test.go
@@ -168,9 +164,17 @@ Each user token can only contain lowercase letters, digits, and underscores. Val
 │   │   │   └── http_requests.go
 │   │   ├── http_responses
 │   │   │   └── http_responses.go
-│   │   └── image_meta
-│   │       ├── image_meta.go
-│   │       └── image_meta_test.go
+│   │   ├── image_meta
+│   │   │   ├── image_meta.go
+│   │   │   └── image_meta_test.go
+│   │   └── tasks
+│   │       └── tasks.go
+│   ├── resize_queue
+│   │   ├── resize_queue.go
+│   │   ├── resize_queue_mock
+│   │   │   └── mock_task_queue.go
+│   │   ├── resize_queue_test.go
+│   │   └── types.go
 │   ├── test_utils
 │   │   └── test_utils.go
 │   └── utils
@@ -179,6 +183,7 @@ Each user token can only contain lowercase letters, digits, and underscores. Val
 ├── main_test.go
 ├── stress_test.go
 └── test_image.jpg
+
 ```
 
 - `main.go` is entry point of application
@@ -187,7 +192,7 @@ Each user token can only contain lowercase letters, digits, and underscores. Val
 - `test_image.jpg` test image used in stress test
 - `internal/handlers/` defines logic of a handler for each endpoint
 - `internal/http_utils/` utility functions for http request
-- `internal/image_worker/` defines logic of image_worker which keeping running in backgroud all the time
+- `internal/resize_queue/` defines logic of queue for resizing jobs
 - `internal/models/image_meta` a data object contains metainfo of a image file, such as path, username, receiptId
 - `internal/utils/` contains definition of utility functions
 - `internal/images/` defines logics of image resizing
@@ -201,7 +206,7 @@ This section addresses improvement can be done in real world case
 - Data encryption: all servers should be configured to use HTTPS for secure communication, and data storage must be encrypted to protect sensitive information.
 - Duplicate receipts: system should check if same receipt for same transcation has been uploaded more than once.
 ### Performance
-- Mechanism needs to implemented to prevent system being crashed by large number of requests. `JobQueue` or `EventBus` can be utilized for this.
+- EventBus with database can be utlized to improve resizing performance
 - Caching, Rate limiting and request throttling should be inplemented as well
 - If resizing failed, mechanism need to be implemented to notify client, such as sending an email.
 - Use load balancer and containers to allow to scale up horizontally

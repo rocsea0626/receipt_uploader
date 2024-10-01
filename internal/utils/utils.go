@@ -13,7 +13,6 @@ import (
 	"receipt_uploader/internal/middlewares"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/resize_queue"
-	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -30,17 +29,11 @@ func LoadConfig() (*configs.Config, error) {
 		return nil, loadErr
 	}
 
-	interval, intervalErr := strconv.Atoi(os.Getenv("INTERVAL"))
-	if intervalErr != nil {
-		return nil, intervalErr
-	}
-
 	config := &configs.Config{
 		Port:          os.Getenv("PORT"),
 		ResizedDir:    filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_RESIZED")),
 		UploadsDir:    filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_UPLOADS")),
 		Dimensions:    configs.AllowedDimensions,
-		Interval:      time.Duration(interval) * time.Second,
 		Mode:          os.Getenv("MODE"),
 		QueueCapacity: constants.QUEUE_CAPACITY,
 	}
@@ -62,12 +55,12 @@ func StartServer(config *configs.Config, stopChan chan struct{}) {
 	}
 
 	imagesService := images.NewService(&config.Dimensions)
-	taskQueue := resize_queue.NewService(config.QueueCapacity, imagesService)
-	go taskQueue.Start(stopChan)
+	resizeQueue := resize_queue.NewService(config.QueueCapacity, imagesService)
+	go resizeQueue.Start(stopChan)
 
 	srv := &http.Server{
 		Addr:    config.Port,
-		Handler: setupRouter(config, imagesService, taskQueue),
+		Handler: setupRouter(config, imagesService, resizeQueue),
 	}
 
 	go func() {
@@ -104,10 +97,10 @@ func initDirs(config *configs.Config) error {
 	return nil
 }
 
-func setupRouter(config *configs.Config, imagesService images.ServiceType, taskQueue resize_queue.ServiceType) http.Handler {
+func setupRouter(config *configs.Config, imagesService images.ServiceType, resizeQueue resize_queue.ServiceType) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", handlers.HealthHandler())
-	mux.Handle("/receipts", middlewares.Auth(http.HandlerFunc(handlers.UploadReceipt(config, imagesService, taskQueue))))
+	mux.Handle("/receipts", middlewares.Auth(http.HandlerFunc(handlers.UploadReceipt(config, imagesService, resizeQueue))))
 	mux.Handle("/receipts/{receiptId}", middlewares.Auth(http.HandlerFunc(handlers.DownloadReceipt(config, imagesService))))
 	return mux
 }
