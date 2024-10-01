@@ -1,4 +1,4 @@
-package task_queue
+package resize_queue
 
 import "receipt_uploader/internal/models/tasks"
 

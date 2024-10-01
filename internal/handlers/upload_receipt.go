@@ -9,7 +9,7 @@ import (
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
 	"receipt_uploader/internal/models/tasks"
-	"receipt_uploader/internal/task_queue"
+	task_queue "receipt_uploader/internal/resize_queue"
 )
 
 func UploadReceipt(

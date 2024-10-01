@@ -37,7 +37,7 @@ func TestMainStess(t *testing.T) {
 		QueueCapacity: constants.QUEUE_CAPACITY,
 	}
 	baseUrl := "http://localhost" + config.Port
-	// defer os.RemoveAll(baseDir)
+	defer os.RemoveAll(baseDir)
 
 	client := &http.Client{}
 

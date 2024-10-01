@@ -1,4 +1,4 @@
-package task_queue_mock
+package resize_queue_mock
 
 import (
 	"fmt"

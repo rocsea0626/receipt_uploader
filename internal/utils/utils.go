@@ -12,7 +12,7 @@ import (
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/middlewares"
 	"receipt_uploader/internal/models/configs"
-	"receipt_uploader/internal/task_queue"
+	"receipt_uploader/internal/resize_queue"
 	"strconv"
 	"time"
 
@@ -62,15 +62,12 @@ func StartServer(config *configs.Config, stopChan chan struct{}) {
 	}
 
 	imagesService := images.NewService(&config.Dimensions)
-	taskQueue := task_queue.NewService(config.QueueCapacity, imagesService)
+	taskQueue := resize_queue.NewService(config.QueueCapacity, imagesService)
 	go taskQueue.Start(stopChan)
-
-	// workerService := image_worker.NewService(config, imagesService)
-	// go workerService.Start(stopChan)
 
 	srv := &http.Server{
 		Addr:    config.Port,
-		Handler: setupRouter(config, imagesService),
+		Handler: setupRouter(config, imagesService, taskQueue),
 	}
 
 	go func() {
@@ -107,22 +104,10 @@ func initDirs(config *configs.Config) error {
 	return nil
 }
 
-<<<<<<< HEAD
-func setupRouter(config *configs.Config, imagesService images.ServiceType) http.Handler {
+func setupRouter(config *configs.Config, imagesService images.ServiceType, taskQueue resize_queue.ServiceType) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", handlers.HealthHandler())
-	mux.Handle("/receipts", middlewares.Auth(http.HandlerFunc(handlers.UploadReceipt(config, imagesService))))
+	mux.Handle("/receipts", middlewares.Auth(http.HandlerFunc(handlers.UploadReceipt(config, imagesService, taskQueue))))
 	mux.Handle("/receipts/{receiptId}", middlewares.Auth(http.HandlerFunc(handlers.DownloadReceipt(config, imagesService))))
 	return mux
-=======
-func setupRouter(config *configs.Config, imagesService images.ServiceType, taskQueue task_queue.ServiceType) {
-
-	http.HandleFunc("/health", handlers.HealthHandler())
-	http.Handle("/receipts",
-		middlewares.Auth(http.HandlerFunc(handlers.UploadReceipt(config, imagesService, taskQueue))),
-	)
-	http.Handle("/receipts/{receiptId}",
-		middlewares.Auth(http.HandlerFunc(handlers.DownloadReceipt(config, imagesService))),
-	)
->>>>>>> 600cd8b (add task queue)
 }
