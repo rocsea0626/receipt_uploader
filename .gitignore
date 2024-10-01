@@ -38,3 +38,4 @@ Thumbs.db
 # Build artifacts
 bin/
 receipts/
+stress-test-images/

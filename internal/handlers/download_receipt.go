@@ -46,16 +46,20 @@ func handleGet(w http.ResponseWriter, r *http.Request, config *configs.Config, i
 	fileBytes, fileName, getErr := imagesService.GetImage(imageMeta)
 	if getErr != nil {
 		logging.Errorf("images.GetImage() failed, err: %s", getErr.Error())
-		if os.IsNotExist(getErr) {
-			resp := http_responses.ErrorResponse{
-				Error: constants.HTTP_ERR_MSG_404,
-			}
-			http_utils.SendErrorResponse(w, &resp, http.StatusNotFound)
-		}
+
 		resp := http_responses.ErrorResponse{
 			Error: constants.HTTP_ERR_MSG_500,
 		}
-		http_utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
+		statusCode := http.StatusInternalServerError
+
+		if os.IsNotExist(getErr) {
+			resp = http_responses.ErrorResponse{
+				Error: constants.HTTP_ERR_MSG_404,
+			}
+			statusCode = http.StatusNotFound
+		}
+
+		http_utils.SendErrorResponse(w, &resp, statusCode)
 		return
 	}
 

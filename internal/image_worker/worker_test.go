@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/images"
 	images_mock "receipt_uploader/internal/images/mock"
 	"receipt_uploader/internal/logging"
@@ -11,6 +12,7 @@ import (
 	"receipt_uploader/internal/models/image_meta"
 	"receipt_uploader/internal/test_utils"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -30,15 +32,15 @@ func TestResizeImages(t *testing.T) {
 		extension := "jpg"
 		testFilename := username + "#receiptupload123.jpg"
 		testFilePath := filepath.Join(uploadsDir, testFilename)
-		imageFile := image_meta.FromFormData(username, extension, uploadsDir)
-		test_utils.CreateTestImageJPG(imageFile.Path, 1000, 1200)
+		imageMeta := image_meta.FromFormData(username, extension, uploadsDir)
+		test_utils.CreateTestImageJPG(imageMeta.Path, 1000, 1200)
 
-		resizeErr := resizeImages(uploadsDir, destDir, imageService)
+		resizeErr := resizeImages(uploadsDir, destDir, 2*time.Second, imageService)
 		assert.Nil(t, resizeErr)
 
-		smallImagePath := image_meta.GetResizedPath(imageFile, filepath.Join(destDir, username), "small")
-		mediumImagePath := image_meta.GetResizedPath(imageFile, filepath.Join(destDir, username), "medium")
-		largeImagePath := image_meta.GetResizedPath(imageFile, filepath.Join(destDir, username), "large")
+		smallImagePath := image_meta.GetResizedPath(imageMeta, filepath.Join(destDir, username), "small")
+		mediumImagePath := image_meta.GetResizedPath(imageMeta, filepath.Join(destDir, username), "medium")
+		largeImagePath := image_meta.GetResizedPath(imageMeta, filepath.Join(destDir, username), "large")
 
 		_, smallErr := os.Stat(smallImagePath)
 		assert.Nil(t, smallErr)
@@ -65,14 +67,41 @@ func TestResizeImages(t *testing.T) {
 
 		username := "user_1"
 		extension := "jpg"
-		imageFile := image_meta.FromFormData(username, extension, uploadsDir)
-		test_utils.CreateTestImageJPG(imageFile.Path, 1000, 1200)
+		imageMeta := image_meta.FromFormData(username, extension, uploadsDir)
+		test_utils.CreateTestImageJPG(imageMeta.Path, 1000, 1200)
 
-		resizeErr := resizeImages(uploadsDir, destDir, mockImagesService)
+		resizeErr := resizeImages(uploadsDir, destDir, 2*time.Second, mockImagesService)
 		assert.NotNil(t, resizeErr)
 		logging.Debugf("resizeErr: %s", resizeErr.Error())
 
-		_, fileErr := os.Stat(imageFile.Path)
+		_, fileErr := os.Stat(imageMeta.Path)
+		assert.Nil(t, fileErr)
+	})
+
+	t.Run("should fail, GenerateResizedImages() timeout", func(t *testing.T) {
+
+		mockImagesService := &images_mock.ServiceMock{}
+
+		baseDir := "image_worker"
+		uploadsDir := filepath.Join(baseDir, "uploads")
+		destDir := "mock_generate_images_timeout"
+		os.MkdirAll(uploadsDir, 0755)
+		os.MkdirAll(destDir, 0755)
+		defer os.RemoveAll(destDir)
+		defer os.RemoveAll(baseDir)
+
+		username := "user_1"
+		extension := "jpg"
+		timeout := constants.IMAGE_WORKER_TIMEOUT - 1*time.Second
+
+		imageMeta := image_meta.FromFormData(username, extension, uploadsDir)
+		test_utils.CreateTestImageJPG(imageMeta.Path, 1000, 1200)
+
+		resizeErr := resizeImages(uploadsDir, destDir, timeout, mockImagesService)
+		assert.NotNil(t, resizeErr)
+		assert.Contains(t, resizeErr.Error(), "resizeImages() timed out")
+
+		_, fileErr := os.Stat(imageMeta.Path)
 		assert.Nil(t, fileErr)
 	})
 }

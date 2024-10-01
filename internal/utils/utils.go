@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -64,11 +65,28 @@ func StartServer(config *configs.Config, stopChan chan struct{}) {
 
 	go workerService.Start(stopChan)
 
-	setupRouter(config, imagesService)
+	srv := &http.Server{
+		Addr:    config.Port,
+		Handler: setupRouter(config, imagesService),
+	}
 
-	fmt.Println("Starting server on ", constants.PORT)
-	if err := http.ListenAndServe(constants.PORT, nil); err != nil {
-		fmt.Println("Error starting server:", err)
+	go func() {
+		fmt.Println("Starting server on ", config.Port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Println("Error starting server:", err)
+		}
+	}()
+
+	<-stopChan
+	fmt.Println("Received shutdown signal, shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		fmt.Println("Server shutdown failed:", err)
+	} else {
+		fmt.Println("Server exited gracefully")
 	}
 
 }
@@ -86,13 +104,10 @@ func initDirs(config *configs.Config) error {
 	return nil
 }
 
-func setupRouter(config *configs.Config, imagesService images.ServiceType) {
-
-	http.HandleFunc("/health", handlers.HealthHandler())
-	http.Handle("/receipts",
-		middlewares.Auth(http.HandlerFunc(handlers.UploadReceipt(config, imagesService))),
-	)
-	http.Handle("/receipts/{receiptId}",
-		middlewares.Auth(http.HandlerFunc(handlers.DownloadReceipt(config, imagesService))),
-	)
+func setupRouter(config *configs.Config, imagesService images.ServiceType) http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", handlers.HealthHandler())
+	mux.Handle("/receipts", middlewares.Auth(http.HandlerFunc(handlers.UploadReceipt(config, imagesService))))
+	mux.Handle("/receipts/{receiptId}", middlewares.Auth(http.HandlerFunc(handlers.DownloadReceipt(config, imagesService))))
+	return mux
 }

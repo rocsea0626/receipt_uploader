@@ -4,7 +4,9 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/models/image_meta"
+	"time"
 )
 
 type ServiceMock struct{}
@@ -19,6 +21,11 @@ func (s *ServiceMock) GenerateResizedImages(imageMeta *image_meta.ImageMeta, des
 
 	if destDir == "mock_generate_images_failed" {
 		return errors.New("mock GenerateResizedImages() failed")
+	}
+
+	if destDir == "mock_generate_images_timeout" {
+		time.Sleep(constants.IMAGE_WORKER_TIMEOUT)
+		return nil
 	}
 	return nil
 }

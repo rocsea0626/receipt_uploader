@@ -19,11 +19,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var numClients = 50
+var numClients = 100
 
 func TestMainStess(t *testing.T) {
 
 	baseDir := "stress-test-images"
+	os.RemoveAll(baseDir)
+
 	config := &configs.Config{
 		Port:       ":8080",
 		ResizedDir: filepath.Join(baseDir, "resized"),
@@ -48,6 +50,7 @@ func TestMainStess(t *testing.T) {
 	t.Run("stress testing, multiple POST&GET /receipts request", func(t *testing.T) {
 		waitTime := numClients * 2
 		var wg sync.WaitGroup
+		var mu sync.Mutex
 		url := baseUrl + "/receipts"
 
 		receiptIDs := make(map[string]string)
@@ -70,8 +73,10 @@ func TestMainStess(t *testing.T) {
 				var uploadResp http_responses.UploadResponse
 				test_utils.ParseResponseBody(t, resp, &uploadResp)
 				assert.NotEmpty(t, uploadResp.ReceiptID)
-				receiptIDs[userToken] = uploadResp.ReceiptID
 
+				mu.Lock()
+				receiptIDs[userToken] = uploadResp.ReceiptID
+				mu.Unlock()
 			}(i)
 		}
 		wg.Wait()

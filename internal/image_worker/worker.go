@@ -1,9 +1,11 @@
 package image_worker
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
@@ -17,6 +19,7 @@ type Service struct {
 	SrcDir       string
 	DestDir      string
 	ImageService images.ServiceType
+	Timeout      time.Duration
 }
 
 func NewService(config *configs.Config, service images.ServiceType) ServiceType {
@@ -25,12 +28,14 @@ func NewService(config *configs.Config, service images.ServiceType) ServiceType 
 		SrcDir:       config.UploadsDir,
 		DestDir:      config.ResizedDir,
 		ImageService: service,
+		Timeout:      constants.IMAGE_WORKER_TIMEOUT,
 	}
 }
 
 func (s *Service) Start(stopChan <-chan struct{}) {
 	fmt.Println("starting worker...")
 	var wg sync.WaitGroup
+	resizeChan := make(chan struct{}, 1)
 
 	for {
 		select {
@@ -39,45 +44,78 @@ func (s *Service) Start(stopChan <-chan struct{}) {
 			wg.Wait()
 			return
 		case <-time.After(s.Interval):
-			logging.Debugf("Wake up after sleeping, starting processing...")
+			logging.Infof("Wake up after sleeping, starting processing...")
 
-			wg.Add(1)
-			defer wg.Done()
-			resizeErr := resizeImages(s.SrcDir, s.DestDir, s.ImageService)
-			if resizeErr != nil {
-				logging.Errorf("resizeImages() failed, err: %s", resizeErr.Error())
+			select {
+			case resizeChan <- struct{}{}: // allows only 1 instance of resizeImages() running
+				wg.Add(1)
+				go func() {
+					defer func() {
+						<-resizeChan
+						wg.Done()
+					}()
+
+					resizeErr := resizeImages(s.SrcDir, s.DestDir, s.Timeout, s.ImageService)
+					if resizeErr != nil {
+						logging.Errorf("resizeImages() failed, err: %s", resizeErr.Error())
+					}
+					// time.Sleep(500 * time.Millisecond)
+				}()
+			default:
+				logging.Infof("resizeImages() is already in progress, skipping this cycle...")
 			}
 		}
 	}
 }
 
-func resizeImages(srcDir, destDir string, imagesService images.ServiceType) error {
-	logging.Debugf("resizeImages(srcDir: %s, destDir: %s)", srcDir, destDir)
+func resizeImages(srcDir, destDir string, timeout time.Duration, imagesService images.ServiceType) error {
+	logging.Debugf("resizeImages(srcDir: %s, destDir: %s, timeout: %v)", srcDir, destDir, timeout)
 
-	fName, fileErr := getFirstFile(srcDir)
-	if fileErr != nil {
-		return fmt.Errorf("getFirstFile() failed, err: %w", fileErr)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	errChan := make(chan error, 1)
+
+	go func() {
+		defer func() {
+			close(errChan)
+		}()
+
+		fName, fileErr := getFirstFile(srcDir)
+		if fileErr != nil {
+			errChan <- fmt.Errorf("getFirstFile() failed, err: %w", fileErr)
+		}
+		if fName != "" {
+			startTime := time.Now()
+			imageMeta, imageErr := image_meta.FromUploadDir(filepath.Join(srcDir, fName))
+			if imageErr != nil {
+				errChan <- fmt.Errorf("metainfo.FromPath() failed, err: %w", imageErr)
+				return
+			}
+
+			genErr := imagesService.GenerateResizedImages(imageMeta, destDir)
+			if genErr != nil {
+				errChan <- fmt.Errorf("s.ImageService.GenerateResizedImages() failed, err: %w", genErr)
+				return
+			}
+			removeErr := os.Remove(imageMeta.Path)
+			if removeErr != nil {
+				errChan <- fmt.Errorf("os.Remove() failed, err: %w", removeErr)
+				return
+			}
+
+			elapsedTime := time.Since(startTime)
+			logging.Infof("resizeImages() completes with %d ms", elapsedTime.Milliseconds())
+		}
+
+	}()
+
+	select {
+	case genErr := <-errChan:
+		return genErr
+	case <-ctx.Done():
+		return fmt.Errorf("resizeImages() timed out")
 	}
-	if fName != "" {
-		startTime := time.Now()
-		imageMeta, imageErr := image_meta.FromUploadDir(filepath.Join(srcDir, fName))
-		if imageErr != nil {
-			return fmt.Errorf("metainfo.FromPath() failed, err: %w", imageErr)
-		}
-
-		genErr := imagesService.GenerateResizedImages(imageMeta, destDir)
-		if genErr != nil {
-			return fmt.Errorf("s.ImageService.GenerateResizedImages() failed, err: %w", genErr)
-		}
-		removeErr := os.Remove(imageMeta.Path)
-		if removeErr != nil {
-			return fmt.Errorf("os.Remove() failed, err: %w", removeErr)
-		}
-		elapsedTime := time.Since(startTime)
-		logging.Infof("resizeImages() completes with %d ms", elapsedTime.Milliseconds())
-	}
-
-	return nil
 }
 
 // getFirstFile scans the specified directory for files and returns the name of the first file found.

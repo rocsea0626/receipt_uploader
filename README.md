@@ -24,12 +24,12 @@ response:
 }
 
 # Example request to download original image
-curl -H "username_token: token_guo" -o download.jpg http://localhost:8080/receipts/{receipId}
+curl -f -H "username_token: token_guo" -o download.jpg http://localhost:8080/receipts/{receipId}
 
 # Example request to download different sizes of image
-curl -H "username_token: token_guo" -o download-small.jpg http://localhost:8080/receipts/{receipId}\?size\=small
-curl -H "username_token: token_guo" -o download-medium.jpg http://localhost:8080/receipts/{receipId}\?size\=medium
-curl -H "username_token: token_guo" -o download-large.jpg http://localhost:8080/receipts/{receipId}\?size\=large
+curl -f -H "username_token: token_guo" -o download-small.jpg http://localhost:8080/receipts/{receipId}\?size\=small
+curl -f -H "username_token: token_guo" -o download-medium.jpg http://localhost:8080/receipts/{receipId}\?size\=medium
+curl -f -H "username_token: token_guo" -o download-large.jpg http://localhost:8080/receipts/{receipId}\?size\=large
 
 ```
 
@@ -60,7 +60,8 @@ All requests must have `username_token` attached in the header. All images are s
   - All images are named with uuid without "-" and resized images are suffixed by size, i.e., `4179e13020ad43bab4d8867338f0f048_small.jpg` and stored under `receipts/config.DIR_RESIZED/{username}` folder
   - Each original receipt is converted into 3 different sizes: small, medium and large.
   - Resized images are proportionally scaled to maintain original aspect ratio.
-  - To prevent server being overwhelmed by large number of requests, a worker goroutine keeps running continuously in background to scan `receipts/config.UPLOADS_DIR` folder with an interval of `config.Interval` and resize the first uploaded receipt found in that folder. Currently, `config.Interval=1` which means it can resize 1 image per second maximum. However, this approach does not garauntee FIFO order of uploaded images.
+  - Large number of requests: to prevent server being overwhelmed by large number of requests, a worker goroutine keeps running continuously in background to scan `receipts/config.UPLOADS_DIR` folder with an interval of `config.Interval` and resize the first uploaded receipt found in that folder. Currently, `config.Interval=1` which means it can resize 1 image per second maximum. However, this approach does not garauntee FIFO order of uploaded images.
+  - Resizing timeout: to prevent resizing of one image hanging for too long, timeout is configured as `constants.IMAGE_WORKER_TIMEOUT=2`
   - Once resizing completes, original receipt will be moved to `receipts/config.DIR_RESIZED/{username}` folder
   
 ### Downloading of receipt 
