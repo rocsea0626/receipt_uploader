@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
@@ -27,15 +28,16 @@ func TestMainStess(t *testing.T) {
 	os.RemoveAll(baseDir)
 
 	config := &configs.Config{
-		Port:       ":8080",
-		ResizedDir: filepath.Join(baseDir, "resized"),
-		UploadsDir: filepath.Join(baseDir, "uploads"),
-		Dimensions: configs.AllowedDimensions,
-		Interval:   time.Duration(1) * time.Second,
-		Mode:       "release",
+		Port:          ":8080",
+		ResizedDir:    filepath.Join(baseDir, "resized"),
+		UploadsDir:    filepath.Join(baseDir, "uploads"),
+		Dimensions:    configs.AllowedDimensions,
+		Interval:      time.Duration(1) * time.Second,
+		Mode:          "release",
+		QueueCapacity: constants.QUEUE_CAPACITY,
 	}
 	baseUrl := "http://localhost" + config.Port
-	defer os.RemoveAll(baseDir)
+	// defer os.RemoveAll(baseDir)
 
 	client := &http.Client{}
 
@@ -48,7 +50,7 @@ func TestMainStess(t *testing.T) {
 	go utils.StartServer(config, stopChan)
 
 	t.Run("stress testing, multiple POST&GET /receipts request", func(t *testing.T) {
-		waitTime := numClients * 2
+		waitTime := numClients * 1
 		var wg sync.WaitGroup
 		var mu sync.Mutex
 		url := baseUrl + "/receipts"
@@ -122,7 +124,7 @@ func TestMainStess(t *testing.T) {
 		url := baseUrl + "/receipts"
 
 		// upload 1 receipt
-		userToken := "user_token_0"
+		userToken := "user_token_gets"
 		req, reqErr := test_utils.GenerateUploadRequest(t, url, "test_image.jpg", userToken)
 		assert.Nil(t, reqErr)
 

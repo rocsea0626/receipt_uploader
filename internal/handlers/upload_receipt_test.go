@@ -7,6 +7,7 @@ import (
 	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/models/configs"
+	task_queue_mock "receipt_uploader/internal/task_queue/mock"
 	"receipt_uploader/internal/test_utils"
 	"testing"
 
@@ -26,6 +27,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 	defer os.RemoveAll(config.UploadsDir)
 
 	imagesService := images.NewService(&config.Dimensions)
+	mockTaskQueue := &task_queue_mock.ServiceMock{}
 
 	t.Run("succeed, POST, 1200x1200 image", func(t *testing.T) {
 		fileName := "test_image_save_upload.jpg"
@@ -38,7 +40,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService)
+		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
 
 		handler.ServeHTTP(rr, req)
 
@@ -57,7 +59,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService)
+		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
 
 		handler.ServeHTTP(rr, req)
 
@@ -76,7 +78,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService)
+		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
 
 		handler.ServeHTTP(rr, req)
 
@@ -99,7 +101,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService)
+		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
 
 		handler.ServeHTTP(rr, req)
 
@@ -122,7 +124,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService)
+		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
 
 		handler.ServeHTTP(rr, req)
 
@@ -135,7 +137,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService)
+		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
 
 		handler.ServeHTTP(rr, req)
 

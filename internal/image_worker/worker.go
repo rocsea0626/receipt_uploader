@@ -14,6 +14,11 @@ import (
 	"time"
 )
 
+type TaskQueue struct {
+	tasks chan string
+	wg    sync.WaitGroup
+}
+
 type Service struct {
 	Interval     time.Duration
 	SrcDir       string

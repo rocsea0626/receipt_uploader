@@ -8,9 +8,15 @@ import (
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
+	"receipt_uploader/internal/models/tasks"
+	"receipt_uploader/internal/task_queue"
 )
 
-func UploadReceipt(config *configs.Config, imagesService images.ServiceType) http.HandlerFunc {
+func UploadReceipt(
+	config *configs.Config,
+	imagesService images.ServiceType,
+	taskQueue task_queue.ServiceType,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logging.Infof("received request, %s, %s", r.Method, r.URL.Path)
 
@@ -22,11 +28,17 @@ func UploadReceipt(config *configs.Config, imagesService images.ServiceType) htt
 			return
 		}
 
-		handlePost(w, r, config, imagesService)
+		handlePost(w, r, config, imagesService, taskQueue)
 	}
 }
 
-func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, imagesService images.ServiceType) {
+func handlePost(
+	w http.ResponseWriter,
+	r *http.Request,
+	config *configs.Config,
+	imagesService images.ServiceType,
+	taskQueue task_queue.ServiceType,
+) {
 	logging.Debugf("handlePost()")
 	username := r.Header.Get("username_token")
 
@@ -41,7 +53,7 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 	}
 	logging.Debugf("len(bytes): %d", len(bytes))
 
-	imgFile, saveErr := imagesService.SaveUpload(&bytes, username, config.UploadsDir)
+	imageMeta, saveErr := imagesService.SaveUpload(&bytes, username, config.UploadsDir)
 	if saveErr != nil {
 		logging.Errorf("utils.SaveUpload() failed, err: %s", saveErr.Error())
 		resp := http_responses.ErrorResponse{
@@ -50,9 +62,22 @@ func handlePost(w http.ResponseWriter, r *http.Request, config *configs.Config, 
 		http_utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
 		return
 	}
-	logging.Infof("image has been saved, path: %s", imgFile.Path)
+	logging.Infof("image has been saved, path: %s", imageMeta.Path)
 
-	receiptID := imgFile.ReceiptID
+	task := tasks.ResizeTask{
+		ImageMeta: *imageMeta,
+		DestDir:   config.ResizedDir,
+	}
+	if !taskQueue.Enqueue(task) {
+		logging.Infof("taskQueue.Enqueue() failed")
+		resp := http_responses.ErrorResponse{
+			Error: constants.HTTP_ERR_MSG_500,
+		}
+		http_utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
+		return
+	}
+
+	receiptID := imageMeta.ReceiptID
 	resp := http_responses.UploadResponse{
 		ReceiptID: receiptID,
 	}
