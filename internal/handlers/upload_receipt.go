@@ -44,7 +44,7 @@ func handlePost(
 
 	bytes, decodeErr := imagesService.ParseImage(r)
 	if decodeErr != nil {
-		logging.Debugf("imagesService.ParseImage() failed, err: %s", decodeErr.Error())
+		logging.Errorf("imagesService.ParseImage() failed, err: %s", decodeErr.Error())
 		resp := http_responses.ErrorResponse{
 			Error: constants.HTTP_ERR_MSG_400,
 		}
@@ -69,7 +69,7 @@ func handlePost(
 		DestDir:   config.ResizedDir,
 	}
 	if !resizeQueue.Enqueue(task) {
-		logging.Infof("resizeQueue.Enqueue() failed")
+		logging.Warnf("resizeQueue.Enqueue() failed")
 		resp := http_responses.ErrorResponse{
 			Error: constants.HTTP_ERR_MSG_500,
 		}

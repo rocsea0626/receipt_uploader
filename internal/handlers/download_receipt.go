@@ -15,7 +15,7 @@ import (
 
 func DownloadReceipt(config *configs.Config, imagesService images.ServiceType) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		logging.Infof("received request, %s, %s", r.Method, r.URL.Path)
+		logging.Infof("received request, %s, %s, %s", r.Method, r.URL.Path, r.Header.Get("username_token"))
 
 		if http.MethodGet != r.Method {
 			resp := http_responses.ErrorResponse{
