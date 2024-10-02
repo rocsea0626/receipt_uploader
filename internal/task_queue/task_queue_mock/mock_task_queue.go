@@ -1,23 +1,25 @@
-package resize_queue_mock
+package task_queue_mock
 
 import (
 	"receipt_uploader/internal/logging"
-	"receipt_uploader/internal/models/tasks"
+	"receipt_uploader/internal/task_queue"
+	"strings"
 )
 
-type ServiceMock struct{}
+type ServiceMock struct {
+	Capacity int
+}
 
 func (tq *ServiceMock) Start(stopChan <-chan struct{}) {
 	logging.Debugf("resize_queue_mock.Start()")
 }
 
-func (tq *ServiceMock) Enqueue(task tasks.ResizeTask) bool {
+func (tq *ServiceMock) Enqueue(task task_queue.Task) bool {
 	logging.Debugf("resize_queue_mock.Enqueue(taks: #%v)", task)
-
-	if task.DestDir == "./test_image_enqueue_failed" {
+	if strings.Contains(task.Name, "mock_enqueue_timeout") {
+		logging.Debugf("mock enqueue timeout")
 		return false
 	}
-
 	return true
 }
 

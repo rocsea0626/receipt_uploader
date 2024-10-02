@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/http_utils"
@@ -8,14 +9,13 @@ import (
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
-	"receipt_uploader/internal/models/tasks"
-	"receipt_uploader/internal/resize_queue"
+	"receipt_uploader/internal/task_queue"
 )
 
 func UploadReceipt(
 	config *configs.Config,
 	imagesService images.ServiceType,
-	resizeQueue resize_queue.ServiceType,
+	taskQueue task_queue.ServiceType,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logging.Infof("received request, %s, %s", r.Method, r.URL.Path)
@@ -28,7 +28,7 @@ func UploadReceipt(
 			return
 		}
 
-		handlePost(w, r, config, imagesService, resizeQueue)
+		handlePost(w, r, config, imagesService, taskQueue)
 	}
 }
 
@@ -37,7 +37,7 @@ func handlePost(
 	r *http.Request,
 	config *configs.Config,
 	imagesService images.ServiceType,
-	resizeQueue resize_queue.ServiceType,
+	taskQueue task_queue.ServiceType,
 ) {
 	logging.Debugf("handlePost()")
 	username := r.Header.Get("username_token")
@@ -64,12 +64,15 @@ func handlePost(
 	}
 	logging.Infof("image has been saved, path: %s", imageMeta.Path)
 
-	task := tasks.ResizeTask{
-		ImageMeta: *imageMeta,
-		DestDir:   config.ResizedDir,
+	task := task_queue.Task{
+		Name: fmt.Sprintf("imagesService.GenerateResizedImages(imageMeta.Path: %s, destDir: %s)", imageMeta.Path, config.ResizedDir),
+		Func: func() error {
+			return imagesService.GenerateResizedImages(imageMeta, config.ResizedDir)
+		},
 	}
-	if !resizeQueue.Enqueue(task) {
-		logging.Warnf("resizeQueue.Enqueue() failed")
+
+	if !taskQueue.Enqueue(task) {
+		logging.Warnf("taskQueue.Enqueue() failed")
 		resp := http_responses.ErrorResponse{
 			Error: constants.HTTP_ERR_MSG_500,
 		}

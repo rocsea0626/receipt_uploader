@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"receipt_uploader/internal/constants"
+	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/image_meta"
 	"time"
 )
@@ -12,12 +13,12 @@ import (
 type ServiceMock struct{}
 
 func (s *ServiceMock) ParseImage(r *http.Request) ([]byte, error) {
-	log.Println("images_mock.ParseImage()")
+	logging.Debugf("images_mock.ParseImage()")
 	return nil, nil
 }
 
 func (s *ServiceMock) GenerateResizedImages(imageMeta *image_meta.ImageMeta, destDir string) error {
-	log.Printf("images_mock.GenerateResizedImages(srcPath: %s)", imageMeta.Path)
+	log.Printf("images_mock.GenerateResizedImages()")
 
 	if destDir == "mock_generate_images_failed" {
 		return errors.New("mock GenerateResizedImages() failed")
@@ -31,8 +32,10 @@ func (s *ServiceMock) GenerateResizedImages(imageMeta *image_meta.ImageMeta, des
 }
 
 func (s *ServiceMock) SaveUpload(bytes *[]byte, username, destDir string) (*image_meta.ImageMeta, error) {
-	log.Println("images_mock.SaveUpload()")
-	return nil, nil
+	logging.Debugf("images_mock.SaveUpload()")
+	return &image_meta.ImageMeta{
+		Path: "images_mock.SaveUpload_path",
+	}, nil
 }
 
 func (s *ServiceMock) GetImage(imageMeta *image_meta.ImageMeta) ([]byte, string, error) {

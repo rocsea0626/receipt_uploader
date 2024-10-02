@@ -12,7 +12,7 @@ import (
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/middlewares"
 	"receipt_uploader/internal/models/configs"
-	"receipt_uploader/internal/resize_queue"
+	"receipt_uploader/internal/task_queue"
 	"strconv"
 	"time"
 
@@ -61,12 +61,12 @@ func StartServer(config *configs.Config, stopChan chan struct{}) {
 	}
 
 	imagesService := images.NewService(&config.Dimensions)
-	resizeQueue := resize_queue.NewService(config.QueueCapacity, imagesService)
-	go resizeQueue.Start(stopChan)
+	taskQueue := task_queue.NewService(config.QueueCapacity, imagesService)
+	go taskQueue.Start(stopChan)
 
 	srv := &http.Server{
 		Addr:    config.Port,
-		Handler: setupRouter(config, imagesService, resizeQueue),
+		Handler: setupRouter(config, imagesService, taskQueue),
 	}
 
 	go func() {
@@ -103,10 +103,10 @@ func initDirs(config *configs.Config) error {
 	return nil
 }
 
-func setupRouter(config *configs.Config, imagesService images.ServiceType, resizeQueue resize_queue.ServiceType) http.Handler {
+func setupRouter(config *configs.Config, imagesService images.ServiceType, taskQueue task_queue.ServiceType) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", handlers.HealthHandler())
-	mux.Handle("/receipts", middlewares.Auth(http.HandlerFunc(handlers.UploadReceipt(config, imagesService, resizeQueue))))
+	mux.Handle("/receipts", middlewares.Auth(http.HandlerFunc(handlers.UploadReceipt(config, imagesService, taskQueue))))
 	mux.Handle("/receipts/{receiptId}", middlewares.Auth(http.HandlerFunc(handlers.DownloadReceipt(config, imagesService))))
 	return mux
 }
