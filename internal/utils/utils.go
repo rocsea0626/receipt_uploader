@@ -13,6 +13,7 @@ import (
 	"receipt_uploader/internal/middlewares"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/resize_queue"
+	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -29,12 +30,18 @@ func LoadConfig() (*configs.Config, error) {
 		return nil, loadErr
 	}
 
+	capacity, capErr := strconv.Atoi(os.Getenv("QUEUE_CAPACITY"))
+	if capErr != nil {
+		return nil, capErr
+	}
+
 	config := &configs.Config{
-		Port:       os.Getenv("PORT"),
-		ResizedDir: filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_RESIZED")),
-		UploadsDir: filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_UPLOADS")),
-		Dimensions: configs.AllowedDimensions,
-		Mode:       os.Getenv("MODE"),
+		Port:          os.Getenv("PORT"),
+		ResizedDir:    filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_RESIZED")),
+		UploadsDir:    filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_UPLOADS")),
+		Dimensions:    configs.AllowedDimensions,
+		Mode:          os.Getenv("MODE"),
+		QueueCapacity: capacity,
 	}
 
 	return config, nil
@@ -54,7 +61,7 @@ func StartServer(config *configs.Config, stopChan chan struct{}) {
 	}
 
 	imagesService := images.NewService(&config.Dimensions)
-	resizeQueue := resize_queue.NewService(constants.QUEUE_CAPACITY, imagesService)
+	resizeQueue := resize_queue.NewService(config.QueueCapacity, imagesService)
 	go resizeQueue.Start(stopChan)
 
 	srv := &http.Server{

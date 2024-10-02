@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
@@ -21,20 +20,20 @@ import (
 	"golang.org/x/exp/rand"
 )
 
-var numClients = constants.QUEUE_CAPACITY
-
 func TestMainStess(t *testing.T) {
 
 	baseDir := "stress-test-images"
 	os.RemoveAll(baseDir)
 
 	config := &configs.Config{
-		Port:       ":8080",
-		ResizedDir: filepath.Join(baseDir, "resized"),
-		UploadsDir: filepath.Join(baseDir, "uploads"),
-		Dimensions: configs.AllowedDimensions,
-		Mode:       "release",
+		Port:          ":8080",
+		ResizedDir:    filepath.Join(baseDir, "resized"),
+		UploadsDir:    filepath.Join(baseDir, "uploads"),
+		Dimensions:    configs.AllowedDimensions,
+		Mode:          "release",
+		QueueCapacity: 100,
 	}
+	numClients := config.QueueCapacity
 	baseUrl := "http://localhost" + config.Port
 	defer os.RemoveAll(baseDir)
 
@@ -51,10 +50,9 @@ func TestMainStess(t *testing.T) {
 		receiptIDs := make(map[string]string)
 		url := baseUrl + "/receipts"
 		size := "medium"
-		numRequests := constants.QUEUE_CAPACITY
 		var wg sync.WaitGroup
 
-		for i := 0; i < numRequests; i++ {
+		for i := 0; i < numClients; i++ {
 			userToken := "inter_user_token_" + strconv.Itoa(i)
 			req, reqErr := test_utils.GenerateUploadRequest(t, url, "test_image.jpg", userToken)
 			assert.Nil(t, reqErr)
@@ -76,7 +74,7 @@ func TestMainStess(t *testing.T) {
 		reqs := []*http.Request{}
 		methods := []string{http.MethodGet, http.MethodPost}
 
-		for i := 0; i < numRequests; i++ {
+		for i := 0; i < numClients; i++ {
 			rand.Seed(uint64(time.Now().UnixNano()))
 			randomInt := rand.Intn(2)
 
@@ -99,9 +97,9 @@ func TestMainStess(t *testing.T) {
 			}
 		}
 
-		time.Sleep(time.Duration(numRequests) * time.Second)
+		time.Sleep(time.Duration(numClients) * time.Second)
 
-		// send request interchagnabley at same time
+		// send GET or POST request interchagnabley at same time
 		for _, req := range reqs {
 			wg.Add(1)
 			go func() {

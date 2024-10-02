@@ -30,9 +30,10 @@ var AllowedDimensions = Dimensions{
 }
 
 type Config struct {
-	ResizedDir string // dir to store resize images
-	UploadsDir string // dir to store uploads
-	Port       string
-	Dimensions Dimensions // allowed resizing options
-	Mode       string     // dev, qa, release
+	ResizedDir    string // dir to store resize images
+	UploadsDir    string // dir to store uploads
+	Port          string
+	Dimensions    Dimensions // allowed resizing options
+	Mode          string     // dev, qa, release
+	QueueCapacity int        // number of jobs resize_queue can take
 }
