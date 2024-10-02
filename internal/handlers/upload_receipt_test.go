@@ -7,7 +7,7 @@ import (
 	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/models/configs"
-	resize_queue_mock "receipt_uploader/internal/resize_queue/resize_queue_mock"
+	"receipt_uploader/internal/resize_queue/resize_queue_mock"
 	"receipt_uploader/internal/test_utils"
 	"testing"
 
@@ -143,5 +143,34 @@ func TestUploadReceiptHandler(t *testing.T) {
 
 		status := rr.Code
 		assert.Equal(t, http.StatusMethodNotAllowed, status)
+	})
+
+	t.Run("should fail, enqueue() failed", func(t *testing.T) {
+		fileName := "test_image_enqueue_failed.jpg"
+		mockConfig := configs.Config{
+			UploadsDir: "./mock-uploads",
+			ResizedDir: "./test_image_enqueue_failed",
+			Dimensions: configs.AllowedDimensions,
+		}
+		test_utils.InitTestServer(&mockConfig)
+		defer os.RemoveAll(mockConfig.ResizedDir)
+		defer os.RemoveAll(mockConfig.UploadsDir)
+
+		userToken := ""
+
+		createErr := test_utils.CreateTestImageJPG(fileName, 1200, 1200)
+		assert.Nil(t, createErr)
+		defer os.Remove(fileName)
+
+		req, reqErr := test_utils.GenerateUploadRequest(t, "/receipts", fileName, userToken)
+		assert.Nil(t, reqErr)
+
+		rr := httptest.NewRecorder()
+		handler := UploadReceipt(&mockConfig, imagesService, mockResizeQueue)
+
+		handler.ServeHTTP(rr, req)
+
+		status := rr.Code
+		assert.Equal(t, http.StatusInternalServerError, status)
 	})
 }
