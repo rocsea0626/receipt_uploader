@@ -7,6 +7,7 @@ const (
 	ROOT_DIR_IMAGES  = "receipts"              // root dir to store all uplaoded and converted photos
 	MAX_UPLOAD_SIZE  = int64(10 * 1024 * 1024) // Maximum 10 MB
 	HTTP_ERR_MSG_500 = "internal server error"
+	HTTP_ERR_MSG_503 = "server is busy"
 	HTTP_ERR_MSG_400 = "invalid image"
 	HTTP_ERR_MSG_403 = "access forbidden"
 	HTTP_ERR_MSG_404 = "image not found"

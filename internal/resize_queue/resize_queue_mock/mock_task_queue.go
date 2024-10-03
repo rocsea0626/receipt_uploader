@@ -20,16 +20,3 @@ func (tq *ServiceMock) Enqueue(task tasks.ResizeTask) bool {
 
 	return true
 }
-
-func (q *ServiceMock) Process() {
-	logging.Debugf("resize_queue_mock.Enqueue()")
-}
-
-func (q *ServiceMock) Wait() {
-	logging.Debugf("resize_queue_mock.Wait()")
-
-}
-
-func (q *ServiceMock) Close() {
-	logging.Debugf("resize_queue_mock.Close()")
-}

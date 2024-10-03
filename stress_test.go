@@ -35,15 +35,24 @@ func TestMainStess(t *testing.T) {
 	}
 	numClients := config.QueueCapacity
 	baseUrl := "http://localhost" + config.Port
-	defer os.RemoveAll(baseDir)
 
+	var wg sync.WaitGroup
 	stopChan := make(chan struct{})
+
 	t.Cleanup(func() {
 		log.Println("Cleanup stress test")
 		close(stopChan)
+		wg.Wait()
 	})
 
-	go utils.StartServer(config, stopChan)
+	wg.Add(1)
+	go func() {
+		utils.StartServer(config, stopChan)
+		fmt.Println("deleting stress test folder...")
+		os.RemoveAll(baseDir)
+		wg.Done()
+	}()
+
 	t.Run("stress testing, multiple POST and GET inter-changeably", func(t *testing.T) {
 
 		// to prepare test, upload 10 images sequentialy

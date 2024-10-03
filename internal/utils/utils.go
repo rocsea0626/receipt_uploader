@@ -78,6 +78,7 @@ func StartServer(config *configs.Config, stopChan chan struct{}) {
 
 	<-stopChan
 	fmt.Println("Received shutdown signal, shutting down server...")
+	<-resizeQueue.DoneChan
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

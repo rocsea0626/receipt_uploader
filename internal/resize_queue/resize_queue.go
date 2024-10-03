@@ -3,6 +3,7 @@ package resize_queue
 import (
 	"context"
 	"fmt"
+	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/tasks"
@@ -13,6 +14,7 @@ import (
 type TaskFunc func() error
 
 type ResizeQueue struct {
+	DoneChan      chan struct{}
 	tasks         chan tasks.ResizeTask
 	wg            sync.WaitGroup
 	imagesService images.ServiceType
@@ -21,6 +23,7 @@ type ResizeQueue struct {
 
 func NewService(capacity int, service images.ServiceType) *ResizeQueue {
 	return &ResizeQueue{
+		DoneChan:      make(chan struct{}),
 		tasks:         make(chan tasks.ResizeTask, capacity),
 		imagesService: service,
 	}
@@ -30,14 +33,15 @@ func (q *ResizeQueue) Start(stopChan <-chan struct{}) {
 	fmt.Println("starting task queue...")
 	logging.Infof("queue size: %d, capacity: %d", len(q.tasks), cap(q.tasks))
 
-	go q.Process()
+	go q.process()
 
 	<-stopChan
 	fmt.Println("Stopping task queue...")
 
-	q.Close()
-	q.Wait()
+	q.close()
+	q.wait()
 	fmt.Println("Task queue stopped")
+	close(q.DoneChan)
 }
 
 func (q *ResizeQueue) Enqueue(task tasks.ResizeTask) bool {
@@ -52,29 +56,30 @@ func (q *ResizeQueue) Enqueue(task tasks.ResizeTask) bool {
 	}
 }
 
-func (q *ResizeQueue) Process() {
+func (q *ResizeQueue) process() {
 	fmt.Println("task queue starts running...")
 
+	q.wg.Add(1)
 	for task := range q.tasks {
-		q.wg.Add(1)
-		err := q.WithTimeout(task, 2*time.Second)
+		err := q.withTimeout(task, constants.RESIZE_TIMEOUT*time.Second)
 		if err != nil {
 			logging.Errorf("WithTimeout() failed, path: '%s', err: %s", task.ImageMeta.Path, err)
 		}
-		q.wg.Done()
 	}
+	q.wg.Done()
 }
 
-func (q *ResizeQueue) Wait() {
+func (q *ResizeQueue) wait() {
+	fmt.Printf("processing remaining %d enqueued tasks\n", len(q.tasks))
 	q.wg.Wait()
 }
 
-func (q *ResizeQueue) Close() {
+func (q *ResizeQueue) close() {
 	fmt.Println("closing task queue...")
 	close(q.tasks)
 }
 
-func (q *ResizeQueue) WithTimeout(task tasks.ResizeTask, timeout time.Duration) error {
+func (q *ResizeQueue) withTimeout(task tasks.ResizeTask, timeout time.Duration) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -82,9 +87,7 @@ func (q *ResizeQueue) WithTimeout(task tasks.ResizeTask, timeout time.Duration) 
 	errChan := make(chan error, 1)
 
 	go func() {
-		defer func() {
-			close(errChan)
-		}()
+		defer close(errChan)
 
 		startTime := time.Now()
 		err := q.imagesService.GenerateResizedImages(&task.ImageMeta, task.DestDir)

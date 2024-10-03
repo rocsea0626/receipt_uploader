@@ -71,9 +71,9 @@ func handlePost(
 	if !resizeQueue.Enqueue(task) {
 		logging.Warnf("resizeQueue.Enqueue() failed")
 		resp := http_responses.ErrorResponse{
-			Error: constants.HTTP_ERR_MSG_500,
+			Error: constants.HTTP_ERR_MSG_503,
 		}
-		http_utils.SendErrorResponse(w, &resp, http.StatusInternalServerError)
+		http_utils.SendErrorResponse(w, &resp, http.StatusServiceUnavailable)
 		return
 	}
 

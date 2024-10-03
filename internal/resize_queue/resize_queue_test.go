@@ -1,4 +1,4 @@
-package resize_queue_test
+package resize_queue
 
 import (
 	"testing"
@@ -8,7 +8,6 @@ import (
 	images_mock "receipt_uploader/internal/images/mock"
 	"receipt_uploader/internal/models/image_meta"
 	"receipt_uploader/internal/models/tasks"
-	"receipt_uploader/internal/resize_queue"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -16,7 +15,7 @@ import (
 func TestEnqueue(t *testing.T) {
 	queueCapacity := 3
 	mockImagesService := &images_mock.ServiceMock{}
-	queue := resize_queue.NewService(queueCapacity, mockImagesService)
+	queue := NewService(queueCapacity, mockImagesService)
 
 	task := tasks.ResizeTask{
 		ImageMeta: image_meta.ImageMeta{Path: "test/path"},
@@ -37,21 +36,21 @@ func TestEnqueue(t *testing.T) {
 func TestWithTimeout(t *testing.T) {
 	t.Run("succeed", func(t *testing.T) {
 		mockImagesService := &images_mock.ServiceMock{}
-		queue := resize_queue.NewService(2, mockImagesService)
+		queue := NewService(2, mockImagesService)
 
 		task := tasks.ResizeTask{ImageMeta: image_meta.ImageMeta{Path: "test/path"}, DestDir: "test/destDir"}
 		timeout := constants.RESIZE_TIMEOUT
-		err := queue.WithTimeout(task, timeout)
+		err := queue.withTimeout(task, timeout)
 		assert.Nil(t, err)
 	})
 
 	t.Run("should fail, WithTimeout()time out", func(t *testing.T) {
 		mockImagesService := &images_mock.ServiceMock{}
-		queue := resize_queue.NewService(2, mockImagesService)
+		queue := NewService(2, mockImagesService)
 
 		task := tasks.ResizeTask{ImageMeta: image_meta.ImageMeta{Path: "test/path"}, DestDir: "mock_generate_images_timeout"}
 		timeout := constants.RESIZE_TIMEOUT - 1*time.Second
-		err := queue.WithTimeout(task, timeout)
+		err := queue.withTimeout(task, timeout)
 		assert.NotNil(t, err)
 		assert.Contains(t, err.Error(), "resizeImages() timed out")
 	})

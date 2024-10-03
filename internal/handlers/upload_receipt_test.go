@@ -171,6 +171,6 @@ func TestUploadReceiptHandler(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		status := rr.Code
-		assert.Equal(t, http.StatusInternalServerError, status)
+		assert.Equal(t, http.StatusServiceUnavailable, status)
 	})
 }
