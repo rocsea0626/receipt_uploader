@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -32,7 +31,6 @@ func TestMain(t *testing.T) {
 	}
 	baseUrl := "http://localhost" + config.Port
 	url := baseUrl + "/receipts"
-	defer os.RemoveAll(baseDir)
 
 	client := &http.Client{}
 
@@ -40,7 +38,7 @@ func TestMain(t *testing.T) {
 	stopChan := make(chan struct{})
 
 	t.Cleanup(func() {
-		log.Println("Cleanup stress test")
+		fmt.Println("Cleanup stress test")
 		close(stopChan)
 		wg.Wait()
 	})
@@ -49,6 +47,8 @@ func TestMain(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		utils.StartServer(config, stopChan)
+		fmt.Println("deleting test folder...")
+		os.RemoveAll(baseDir)
 	}()
 
 	t.Run("return 200, /health", func(t *testing.T) {

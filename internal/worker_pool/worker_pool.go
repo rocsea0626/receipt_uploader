@@ -3,6 +3,7 @@ package worker_pool
 import (
 	"context"
 	"fmt"
+	"receipt_uploader/internal/constants"
 	"receipt_uploader/internal/images"
 	"receipt_uploader/internal/logging"
 	"sync"
@@ -45,8 +46,8 @@ func (wp *WorkerPool) Start(stopChan <-chan struct{}) {
 	fmt.Println("stopping worker pool...")
 
 	wp.close()
-
 	wp.wait()
+
 	fmt.Println("worker pool stopped")
 	close(wp.DoneChan)
 }
@@ -78,7 +79,7 @@ func (wp *WorkerPool) close() {
 func (wp *WorkerPool) processTask(task Task) {
 	wp.wg.Add(1)
 
-	err := withTimeout(task, 2*time.Second)
+	err := withTimeout(task, constants.RESIZE_TIMEOUT*time.Second)
 	if err != nil {
 		logging.Errorf("withTimeout() failed, task: %s, err: %s", task.Name, err.Error())
 	}

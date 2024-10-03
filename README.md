@@ -60,7 +60,7 @@ All requests must have `username_token` attached in the header. All images are s
   - Each original receipt is converted into 3 different sizes: small, medium and large.
   - Resized images are proportionally scaled to maintain original aspect ratio.
   - Large number of requests: to prevent server being overwhelmed by large number of requests, a `worker_pool` with capacity defined in `constants.QUEUE_CAPACITY` keeps running continuously in background to process resizing jobs.
-  - Resizing timeout: to prevent resizing of one image blocking subsequent resizing jobs in the `woker`, timeout is configured as `constants.RESIZE_TIMEOUT=2` for 2 seconds for each job.
+  - Resizing timeout: to prevent resizing of one image blocking subsequent resizing jobs in the `woker`, timeout is configured as `constants.RESIZE_TIMEOUT=3` for 3 seconds for each job.
   - All the original uploaded receipts will be kept in `config.UPLOADS_DIR`
 
 

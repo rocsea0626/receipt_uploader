@@ -13,5 +13,5 @@ const (
 	HTTP_ERR_MSG_405 = "method not allowed"
 	IMAGE_SIZE_MIN_W = 600
 	IMAGE_SIZE_MIN_H = 800
-	RESIZE_TIMEOUT   = 2 * time.Second
+	RESIZE_TIMEOUT   = 3 * time.Second
 )

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -36,13 +35,12 @@ func TestMainStess(t *testing.T) {
 	}
 	numClients := config.QueueCapacity
 	baseUrl := "http://localhost" + config.Port
-	defer os.RemoveAll(baseDir)
 
 	var wg sync.WaitGroup
 	stopChan := make(chan struct{})
 
 	t.Cleanup(func() {
-		log.Println("Cleanup stress test")
+		fmt.Println("Cleanup stress test")
 		close(stopChan)
 		wg.Wait()
 	})
@@ -51,6 +49,8 @@ func TestMainStess(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		utils.StartServer(config, stopChan)
+		fmt.Println("deleting test folder...")
+		os.RemoveAll(baseDir)
 	}()
 
 	t.Run("stress testing, multiple POST and GET inter-changeably", func(t *testing.T) {

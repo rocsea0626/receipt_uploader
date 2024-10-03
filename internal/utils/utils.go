@@ -84,7 +84,6 @@ func StartServer(config *configs.Config, stopChan chan struct{}) {
 
 	<-stopChan
 	fmt.Println("Received shutdown signal, shutting down server...")
-	<-workerPool.DoneChan
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -94,6 +93,7 @@ func StartServer(config *configs.Config, stopChan chan struct{}) {
 	} else {
 		fmt.Println("Server exited gracefully")
 	}
+	<-workerPool.DoneChan
 }
 
 func initDirs(config *configs.Config) error {
