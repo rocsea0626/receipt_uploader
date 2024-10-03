@@ -22,10 +22,12 @@ import (
 func TestMain(t *testing.T) {
 	baseDir := "integ-test-images"
 	config := &configs.Config{
-		Port:       ":8080",
-		ResizedDir: filepath.Join(baseDir, "resized"),
-		UploadsDir: filepath.Join(baseDir, "uploads"),
-		Dimensions: configs.AllowedDimensions,
+		Port:          ":8080",
+		ResizedDir:    filepath.Join(baseDir, "resized"),
+		UploadsDir:    filepath.Join(baseDir, "uploads"),
+		Dimensions:    configs.AllowedDimensions,
+		QueueCapacity: 10,
+		WorkerCount:   1,
 	}
 	baseUrl := "http://localhost" + config.Port
 	url := baseUrl + "/receipts"

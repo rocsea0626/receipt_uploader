@@ -9,13 +9,13 @@ import (
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/models/configs"
 	"receipt_uploader/internal/models/http_responses"
-	"receipt_uploader/internal/task_queue"
+	"receipt_uploader/internal/worker_pool"
 )
 
 func UploadReceipt(
 	config *configs.Config,
 	imagesService images.ServiceType,
-	taskQueue task_queue.ServiceType,
+	workerPool worker_pool.ServiceType,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logging.Infof("received request, %s, %s", r.Method, r.URL.Path)
@@ -28,7 +28,7 @@ func UploadReceipt(
 			return
 		}
 
-		handlePost(w, r, config, imagesService, taskQueue)
+		handlePost(w, r, config, imagesService, workerPool)
 	}
 }
 
@@ -37,7 +37,7 @@ func handlePost(
 	r *http.Request,
 	config *configs.Config,
 	imagesService images.ServiceType,
-	taskQueue task_queue.ServiceType,
+	workerPool worker_pool.ServiceType,
 ) {
 	logging.Debugf("handlePost()")
 	username := r.Header.Get("username_token")
@@ -64,15 +64,15 @@ func handlePost(
 	}
 	logging.Infof("image has been saved, path: %s", imageMeta.Path)
 
-	task := task_queue.Task{
+	task := worker_pool.Task{
 		Name: fmt.Sprintf("imagesService.GenerateResizedImages(imageMeta.Path: %s, destDir: %s)", imageMeta.Path, config.ResizedDir),
 		Func: func() error {
 			return imagesService.GenerateResizedImages(imageMeta, config.ResizedDir)
 		},
 	}
 
-	if !taskQueue.Enqueue(task) {
-		logging.Warnf("taskQueue.Enqueue() failed")
+	if !workerPool.Submit(task) {
+		logging.Warnf("workerPool.Submit() failed")
 		resp := http_responses.ErrorResponse{
 			Error: constants.HTTP_ERR_MSG_500,
 		}

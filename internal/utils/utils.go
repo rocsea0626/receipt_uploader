@@ -12,7 +12,7 @@ import (
 	"receipt_uploader/internal/logging"
 	"receipt_uploader/internal/middlewares"
 	"receipt_uploader/internal/models/configs"
-	"receipt_uploader/internal/task_queue"
+	"receipt_uploader/internal/worker_pool"
 	"strconv"
 	"time"
 
@@ -35,6 +35,11 @@ func LoadConfig() (*configs.Config, error) {
 		return nil, capErr
 	}
 
+	workerCount, workerErr := strconv.Atoi(os.Getenv("WORKER_COUNT"))
+	if workerErr != nil {
+		return nil, workerErr
+	}
+
 	config := &configs.Config{
 		Port:          os.Getenv("PORT"),
 		ResizedDir:    filepath.Join(constants.ROOT_DIR_IMAGES, os.Getenv("DIR_RESIZED")),
@@ -42,6 +47,7 @@ func LoadConfig() (*configs.Config, error) {
 		Dimensions:    configs.AllowedDimensions,
 		Mode:          os.Getenv("MODE"),
 		QueueCapacity: capacity,
+		WorkerCount:   workerCount,
 	}
 
 	return config, nil
@@ -61,12 +67,12 @@ func StartServer(config *configs.Config, stopChan chan struct{}) {
 	}
 
 	imagesService := images.NewService(&config.Dimensions)
-	taskQueue := task_queue.NewService(config.QueueCapacity, imagesService)
-	go taskQueue.Start(stopChan)
+	workerPool := worker_pool.NewService(config.QueueCapacity, config.WorkerCount, imagesService)
+	go workerPool.Start(stopChan)
 
 	srv := &http.Server{
 		Addr:    config.Port,
-		Handler: setupRouter(config, imagesService, taskQueue),
+		Handler: setupRouter(config, imagesService, workerPool),
 	}
 
 	go func() {
@@ -78,6 +84,7 @@ func StartServer(config *configs.Config, stopChan chan struct{}) {
 
 	<-stopChan
 	fmt.Println("Received shutdown signal, shutting down server...")
+	<-workerPool.DoneChan
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -87,7 +94,6 @@ func StartServer(config *configs.Config, stopChan chan struct{}) {
 	} else {
 		fmt.Println("Server exited gracefully")
 	}
-
 }
 
 func initDirs(config *configs.Config) error {
@@ -103,10 +109,10 @@ func initDirs(config *configs.Config) error {
 	return nil
 }
 
-func setupRouter(config *configs.Config, imagesService images.ServiceType, taskQueue task_queue.ServiceType) http.Handler {
+func setupRouter(config *configs.Config, imagesService images.ServiceType, workerPool worker_pool.ServiceType) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", handlers.HealthHandler())
-	mux.Handle("/receipts", middlewares.Auth(http.HandlerFunc(handlers.UploadReceipt(config, imagesService, taskQueue))))
+	mux.Handle("/receipts", middlewares.Auth(http.HandlerFunc(handlers.UploadReceipt(config, imagesService, workerPool))))
 	mux.Handle("/receipts/{receiptId}", middlewares.Auth(http.HandlerFunc(handlers.DownloadReceipt(config, imagesService))))
 	return mux
 }

@@ -8,8 +8,8 @@ import (
 	"receipt_uploader/internal/images"
 	images_mock "receipt_uploader/internal/images/mock"
 	"receipt_uploader/internal/models/configs"
-	"receipt_uploader/internal/task_queue/task_queue_mock"
 	"receipt_uploader/internal/test_utils"
+	"receipt_uploader/internal/worker_pool/worker_pool_mock"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 	defer os.RemoveAll(config.UploadsDir)
 
 	imagesService := images.NewService(&config.Dimensions)
-	mockTaskQueue := &task_queue_mock.ServiceMock{}
+	mockWorkerPool := &worker_pool_mock.ServiceMock{}
 
 	t.Run("succeed, POST, 1200x1200 image", func(t *testing.T) {
 		fileName := "test_image_save_upload.jpg"
@@ -41,7 +41,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
+		handler := UploadReceipt(&config, imagesService, mockWorkerPool)
 
 		handler.ServeHTTP(rr, req)
 
@@ -60,7 +60,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
+		handler := UploadReceipt(&config, imagesService, mockWorkerPool)
 
 		handler.ServeHTTP(rr, req)
 
@@ -79,7 +79,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
+		handler := UploadReceipt(&config, imagesService, mockWorkerPool)
 
 		handler.ServeHTTP(rr, req)
 
@@ -102,7 +102,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
+		handler := UploadReceipt(&config, imagesService, mockWorkerPool)
 
 		handler.ServeHTTP(rr, req)
 
@@ -125,7 +125,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
+		handler := UploadReceipt(&config, imagesService, mockWorkerPool)
 
 		handler.ServeHTTP(rr, req)
 
@@ -138,7 +138,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&config, imagesService, mockTaskQueue)
+		handler := UploadReceipt(&config, imagesService, mockWorkerPool)
 
 		handler.ServeHTTP(rr, req)
 
@@ -150,7 +150,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		fileName := "test_image_save_upload_enqueue_failed.jpg"
 
 		mockConfig := configs.Config{
-			ResizedDir: "mock_enqueue_timeout",
+			ResizedDir: "mock_submit_failed",
 		}
 
 		mockImagesService := &images_mock.ServiceMock{}
@@ -163,7 +163,7 @@ func TestUploadReceiptHandler(t *testing.T) {
 		assert.Nil(t, reqErr)
 
 		rr := httptest.NewRecorder()
-		handler := UploadReceipt(&mockConfig, mockImagesService, mockTaskQueue)
+		handler := UploadReceipt(&mockConfig, mockImagesService, mockWorkerPool)
 
 		handler.ServeHTTP(rr, req)
 

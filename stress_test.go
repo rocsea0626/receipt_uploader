@@ -31,11 +31,12 @@ func TestMainStess(t *testing.T) {
 		UploadsDir:    filepath.Join(baseDir, "uploads"),
 		Dimensions:    configs.AllowedDimensions,
 		Mode:          "release",
-		QueueCapacity: 100,
+		QueueCapacity: 10,
+		WorkerCount:   3,
 	}
 	numClients := config.QueueCapacity
 	baseUrl := "http://localhost" + config.Port
-	defer os.RemoveAll(baseDir)
+	// defer os.RemoveAll(baseDir)
 
 	stopChan := make(chan struct{})
 	t.Cleanup(func() {
@@ -43,7 +44,16 @@ func TestMainStess(t *testing.T) {
 		close(stopChan)
 	})
 
-	go utils.StartServer(config, stopChan)
+	// go utils.StartServer(config, stopChan)
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+		utils.StartServer(config, stopChan)
+	}()
+
 	t.Run("stress testing, multiple POST and GET inter-changeably", func(t *testing.T) {
 
 		// to prepare test, upload 10 images sequentialy
@@ -96,8 +106,9 @@ func TestMainStess(t *testing.T) {
 				reqs = append(reqs, postReq)
 			}
 		}
-
-		time.Sleep(time.Duration(numClients) * time.Second)
+		waitTime := time.Duration(numClients/2) * time.Second
+		logging.Infof("waiting %d seconds to allowe server to resize all uploaded images", numClients/2)
+		time.Sleep(waitTime)
 
 		// send GET or POST request interchagnabley at same time
 		for _, req := range reqs {
@@ -133,6 +144,5 @@ func TestMainStess(t *testing.T) {
 			}()
 		}
 		wg.Wait()
-
 	})
 }

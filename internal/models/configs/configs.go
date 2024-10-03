@@ -36,4 +36,5 @@ type Config struct {
 	Dimensions    Dimensions // allowed resizing options
 	Mode          string     // dev, qa, release
 	QueueCapacity int        // number of jobs resize_queue can take
+	WorkerCount   int
 }

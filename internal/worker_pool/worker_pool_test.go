@@ -1,4 +1,4 @@
-package task_queue
+package worker_pool
 
 import (
 	"testing"
@@ -10,33 +10,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEnqueue(t *testing.T) {
+func TestSubmit(t *testing.T) {
 	queueCapacity := 3
+	workerCount := 1
 	mockImagesService := &images_mock.ServiceMock{}
-	queue := NewService(queueCapacity, mockImagesService)
+	workerPool := NewService(queueCapacity, workerCount, mockImagesService)
 
 	task := Task{
-		Name: "mock_task_name",
+		Name: "mock_task_name()",
 		Func: func() error {
 			return nil
 		},
 	}
 
-	success := queue.Enqueue(task)
+	success := workerPool.Submit(task)
 	assert.True(t, success)
 
-	success1 := queue.Enqueue(task)
+	success1 := workerPool.Submit(task)
 	assert.True(t, success1)
 
-	queue.Enqueue(task)
-	success = queue.Enqueue(task)
+	workerPool.Submit(task)
+	success = workerPool.Submit(task)
 	assert.False(t, success)
 }
 
 func TestWithTimeout(t *testing.T) {
 	t.Run("succeed", func(t *testing.T) {
 		task := Task{
-			Name: "mock_task_name",
+			Name: "mock_task_name()",
 			Func: func() error {
 				return nil
 			},
@@ -49,7 +50,7 @@ func TestWithTimeout(t *testing.T) {
 
 	t.Run("should fail, time out", func(t *testing.T) {
 		task := Task{
-			Name: "mock_task_name",
+			Name: "mock_task_name()",
 			Func: func() error {
 				time.Sleep(constants.RESIZE_TIMEOUT)
 				return nil
@@ -58,7 +59,7 @@ func TestWithTimeout(t *testing.T) {
 		timeout := constants.RESIZE_TIMEOUT - 1*time.Second
 		err := withTimeout(task, timeout)
 		assert.NotNil(t, err)
-		assert.Contains(t, err.Error(), "resizeImages() timed out")
+		assert.Contains(t, err.Error(), "mock_task_name() timed out")
 	})
 
 }
