@@ -59,7 +59,7 @@ func NewService(d *configs.Dimensions) ServiceType {
 //	    log.Println("Resized images generated successfully.")
 //	}
 func (s *Service) GenerateResizedImages(imageMeta *image_meta.ImageMeta, destDir string) error {
-	logging.Infof("GenerateResizedImages(srcPath: %s, destDir: %s)", imageMeta.Path, destDir)
+	logging.Debugf("GenerateResizedImages(srcPath: %s, destDir: %s)", imageMeta.Path, destDir)
 
 	fileBytes, readErr := os.ReadFile(imageMeta.Path)
 	if readErr != nil {

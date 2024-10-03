@@ -31,24 +31,23 @@ func TestMainStess(t *testing.T) {
 		UploadsDir:    filepath.Join(baseDir, "uploads"),
 		Dimensions:    configs.AllowedDimensions,
 		Mode:          "release",
-		QueueCapacity: 10,
+		QueueCapacity: 100,
 		WorkerCount:   3,
 	}
 	numClients := config.QueueCapacity
 	baseUrl := "http://localhost" + config.Port
 	// defer os.RemoveAll(baseDir)
 
+	var wg sync.WaitGroup
 	stopChan := make(chan struct{})
+
 	t.Cleanup(func() {
 		log.Println("Cleanup stress test")
 		close(stopChan)
+		wg.Wait()
 	})
 
-	// go utils.StartServer(config, stopChan)
-	var wg sync.WaitGroup
-
 	wg.Add(1)
-
 	go func() {
 		defer wg.Done()
 		utils.StartServer(config, stopChan)

@@ -13,6 +13,7 @@ import (
 	"receipt_uploader/internal/models/http_responses"
 	"receipt_uploader/internal/test_utils"
 	"receipt_uploader/internal/utils"
+	"sync"
 	"testing"
 	"time"
 
@@ -35,13 +36,20 @@ func TestMain(t *testing.T) {
 
 	client := &http.Client{}
 
+	var wg sync.WaitGroup
 	stopChan := make(chan struct{})
+
 	t.Cleanup(func() {
-		log.Println("Cleanup integration test")
+		log.Println("Cleanup stress test")
 		close(stopChan)
+		wg.Wait()
 	})
 
-	go utils.StartServer(config, stopChan)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		utils.StartServer(config, stopChan)
+	}()
 
 	t.Run("return 200, /health", func(t *testing.T) {
 		resp, err := http.Get(baseUrl + "/health")

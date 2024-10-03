@@ -64,6 +64,9 @@ func (wp *WorkerPool) Submit(task Task) bool {
 }
 
 func (wp *WorkerPool) wait() {
+	if len(wp.tasks) > 0 {
+		fmt.Printf("processing remaining %d submitted tasks before closing...\n", len(wp.tasks))
+	}
 	wp.wg.Wait()
 }
 
@@ -77,9 +80,8 @@ func (wp *WorkerPool) processTask(task Task) {
 
 	err := withTimeout(task, 2*time.Second)
 	if err != nil {
-		logging.Errorf("withTimeout() failed, err: %s", err)
+		logging.Errorf("withTimeout() failed, task: %s, err: %s", task.Name, err.Error())
 	}
-	logging.Infof("withTimeout() done")
 	wp.wg.Done()
 }
 
@@ -92,7 +94,7 @@ func (wp *WorkerPool) worker(workerId int) {
 }
 
 func withTimeout(task Task, timeout time.Duration) error {
-
+	logging.Infof("withTimeout(), task: %s", task.Name)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -104,7 +106,7 @@ func withTimeout(task Task, timeout time.Duration) error {
 		startTime := time.Now()
 		err := task.Func()
 		if err != nil {
-			errChan <- fmt.Errorf("task failed, task: %v, err: %w", task, err)
+			errChan <- err
 			return
 		}
 		elapsedTime := time.Since(startTime)
