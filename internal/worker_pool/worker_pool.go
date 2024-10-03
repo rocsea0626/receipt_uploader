@@ -76,22 +76,17 @@ func (wp *WorkerPool) close() {
 	close(wp.tasks)
 }
 
-func (wp *WorkerPool) processTask(task Task) {
-	wp.wg.Add(1)
-
-	err := withTimeout(task, constants.RESIZE_TIMEOUT*time.Second)
-	if err != nil {
-		logging.Errorf("withTimeout() failed, task: %s, err: %s", task.Name, err.Error())
-	}
-	wp.wg.Done()
-}
-
 func (wp *WorkerPool) worker(workerId int) {
 	fmt.Printf("worker_%d started...\n", workerId)
 
+	wp.wg.Add(1)
 	for task := range wp.tasks {
-		wp.processTask(task)
+		err := withTimeout(task, constants.RESIZE_TIMEOUT*time.Second)
+		if err != nil {
+			logging.Errorf("withTimeout() failed, task: %s, err: %s", task.Name, err.Error())
+		}
 	}
+	wp.wg.Done()
 }
 
 func withTimeout(task Task, timeout time.Duration) error {

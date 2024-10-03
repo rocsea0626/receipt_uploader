@@ -55,7 +55,7 @@ func TestMainStess(t *testing.T) {
 
 	t.Run("stress testing, multiple POST and GET inter-changeably", func(t *testing.T) {
 
-		// to prepare test, upload 10 images sequentialy
+		// to prepare test, upload 1 image from {QueueCapacity} clients sequentialy
 		receiptIDs := make(map[string]string)
 		url := baseUrl + "/receipts"
 		size := "medium"
