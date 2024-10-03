@@ -53,14 +53,14 @@ All requests must have `username_token` attached in the header. All images are s
 ### Uploading of receipt
   - Endpoint: Handled by request of `POST /receipts`
   - Each original upload of receipts is stored under `receipts/config.UPLOADS_DIR/` folder, named as `username#uuid-without-dash.jpg`.
-  - Handler submits a resizing job to `resize_queue`.
+  - Handler submits a resizing job to `worker_pool`.
 
 ### Resizing of image
   - All images are named with uuid without "-" and resized images are suffixed by size, i.e., `4179e13020ad43bab4d8867338f0f048_small.jpg` and stored under `receipts/config.DIR_RESIZED/{username}` folder
   - Each original receipt is converted into 3 different sizes: small, medium and large.
   - Resized images are proportionally scaled to maintain original aspect ratio.
-  - Large number of requests: to prevent server being overwhelmed by large number of requests, a `resize_queue` with capacity defined in `constants.QUEUE_CAPACITY` keeps running continuously in background to process resizing jobs.
-  - Resizing timeout: to prevent resizing of one image blocking subsequent resizing jobs in the `resize_queue`, timeout is configured as `constants.RESIZE_TIMEOUT=2` for 2 seconds for each job.
+  - Large number of requests: to prevent server being overwhelmed by large number of requests, a `worker_pool` with capacity defined in `constants.QUEUE_CAPACITY` keeps running continuously in background to process resizing jobs.
+  - Resizing timeout: to prevent resizing of one image blocking subsequent resizing jobs in the `woker`, timeout is configured as `constants.RESIZE_TIMEOUT=2` for 2 seconds for each job.
   - All the original uploaded receipts will be kept in `config.UPLOADS_DIR`
 
 
@@ -164,26 +164,23 @@ Each user token can only contain lowercase letters, digits, and underscores. Val
 │   │   │   └── http_requests.go
 │   │   ├── http_responses
 │   │   │   └── http_responses.go
-│   │   ├── image_meta
-│   │   │   ├── image_meta.go
-│   │   │   └── image_meta_test.go
-│   │   └── tasks
-│   │       └── tasks.go
-│   ├── resize_queue
-│   │   ├── resize_queue.go
-│   │   ├── resize_queue_mock
-│   │   │   └── mock_task_queue.go
-│   │   ├── resize_queue_test.go
-│   │   └── types.go
+│   │   └── image_meta
+│   │       ├── image_meta.go
+│   │       └── image_meta_test.go
 │   ├── test_utils
 │   │   └── test_utils.go
-│   └── utils
-│       └── utils.go
+│   ├── utils
+│   │   └── utils.go
+│   └── worker_pool
+│       ├── types.go
+│       ├── worker_pool.go
+│       ├── worker_pool_mock
+│       │   └── worker_pool_mock.go
+│       └── worker_pool_test.go
 ├── main.go
 ├── main_test.go
 ├── stress_test.go
 └── test_image.jpg
-
 ```
 
 - `main.go` is entry point of application
@@ -192,7 +189,7 @@ Each user token can only contain lowercase letters, digits, and underscores. Val
 - `test_image.jpg` test image used in stress test
 - `internal/handlers/` defines logic of a handler for each endpoint
 - `internal/http_utils/` utility functions for http request
-- `internal/resize_queue/` defines logic of queue for resizing jobs
+- `internal/worker_pool/` defines logic of worker pool for resizing jobs
 - `internal/models/image_meta` a data object contains metainfo of a image file, such as path, username, receiptId
 - `internal/utils/` contains definition of utility functions
 - `internal/images/` defines logics of image resizing

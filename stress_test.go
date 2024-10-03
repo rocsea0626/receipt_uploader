@@ -36,7 +36,7 @@ func TestMainStess(t *testing.T) {
 	}
 	numClients := config.QueueCapacity
 	baseUrl := "http://localhost" + config.Port
-	// defer os.RemoveAll(baseDir)
+	defer os.RemoveAll(baseDir)
 
 	var wg sync.WaitGroup
 	stopChan := make(chan struct{})
